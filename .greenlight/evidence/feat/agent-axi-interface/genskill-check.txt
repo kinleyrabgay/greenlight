@@ -1,0 +1,1 @@
+genskill: skills/greenlight/SKILL.md is up to date

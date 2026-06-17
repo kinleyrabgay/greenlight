@@ -1,0 +1,48 @@
+package steps
+
+import (
+	"context"
+	"fmt"
+	"os/exec"
+
+	"github.com/kinleyrabgay/greenlight/internal/bitbucket"
+	"github.com/kinleyrabgay/greenlight/internal/pipeline"
+	"github.com/kinleyrabgay/greenlight/internal/scm"
+	"github.com/kinleyrabgay/greenlight/internal/scm/github"
+	"github.com/kinleyrabgay/greenlight/internal/scm/gitlab"
+)
+
+// buildHost returns a scm.Host for the given provider, wired to sctx's
+// working directory and environment. When the host cannot be constructed
+// (unknown provider, missing Bitbucket config, etc) it returns nil and a
+// human-readable skip reason suitable for logging.
+func buildHost(sctx *pipeline.StepContext, provider scm.Provider) (scm.Host, string) {
+	cmdFactory := func(_ context.Context, name string, args ...string) *exec.Cmd {
+		return stepCmd(sctx, name, args...)
+	}
+	switch provider {
+	case scm.ProviderGitHub:
+		// Resolve the owner/name slug so gh commands carry --repo and work from
+		// the daemon's fixed (non-repo) working directory. Fall back to the PR
+		// URL when the upstream remote URL is unavailable.
+		repo := github.RepoSlug(sctx.Repo.UpstreamURL)
+		if repo == "" && sctx.Run.PRURL != nil {
+			repo = github.RepoSlug(*sctx.Run.PRURL)
+		}
+		return github.New(cmdFactory, func() bool { return stepCLIAvailable(sctx, provider) }, repo), ""
+	case scm.ProviderGitLab:
+		return gitlab.New(cmdFactory, func() bool { return stepCLIAvailable(sctx, provider) }), ""
+	case scm.ProviderBitbucket:
+		client, err := bitbucket.NewClientFromEnv(sctx.Env)
+		if err != nil {
+			return nil, err.Error()
+		}
+		repo, err := resolveBitbucketRepoRef(sctx.Repo.UpstreamURL, sctx.Run.PRURL)
+		if err != nil {
+			return nil, err.Error()
+		}
+		return bitbucket.NewHost(client, repo), ""
+	default:
+		return nil, fmt.Sprintf("provider %s is not supported yet", provider)
+	}
+}

@@ -1,0 +1,22 @@
+package intent
+
+import "testing"
+
+func TestAllReaders_NoDisabled(t *testing.T) {
+	got := AllReaders(nil)
+	if len(got) != 5 {
+		t.Errorf("expected 5 readers, got %d", len(got))
+	}
+}
+
+func TestAllReaders_Disabled(t *testing.T) {
+	got := AllReaders(map[string]bool{"codex": true, "rovodev": true})
+	if len(got) != 3 {
+		t.Errorf("expected 3 readers, got %d", len(got))
+	}
+	for _, r := range got {
+		if r.Name() == "codex" || r.Name() == "rovodev" {
+			t.Errorf("disabled reader %q present", r.Name())
+		}
+	}
+}
