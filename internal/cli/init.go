@@ -2,26 +2,33 @@ package cli
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/kinleyrabgay/greenlight/internal/daemon"
 	"github.com/kinleyrabgay/greenlight/internal/gate"
+	"github.com/kinleyrabgay/greenlight/internal/profile"
 	"github.com/kinleyrabgay/greenlight/internal/skill"
 	"github.com/spf13/cobra"
 )
 
-const banner = `_  _ ____    _  _ _ ____ ___ ____ _  _ ____ ____
-|\ | |  |    |\/| | [__   |  |__| |_/  |___ [__
-| \| |__|    |  | | ___]  |  |  | | \_ |___ ___]`
+const banner = `____ ____ ____ ____ _  _ _    _ ____ _  _ ___
+| __ |__/ |___ |___ |\ | |    | | __ |__|  |
+|__] |  \ |___ |___ | \| |___ | |__] |  |  |`
 
 func newInitCmd() *cobra.Command {
-	return &cobra.Command{
+	var framework string
+	cmd := &cobra.Command{
 		Use:   "init",
 		Short: "Initialize greenlight gate for the current repository",
 		Long: "Sets up or refreshes a local bare repo as a gate, installs a post-receive hook,\n" +
 			"best-effort isolates the gate hook path from shared local git config writes when Git supports `config --worktree`,\n" +
 			"adds or repairs the \"greenlight\" git remote, and records the repo in the database.\n\n" +
-			"Run this from inside a git repository that has an \"origin\" remote.",
+			"Run this from inside a git repository that has an \"origin\" remote.\n\n" +
+			"Pass --framework <name> to scaffold a .greenlight.yaml that selects a\n" +
+			"framework profile (default commands + review rules). Omit it to rely on\n" +
+			"auto-detection at run time.",
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return trackCommand("init", func() error {
@@ -31,9 +38,21 @@ func newInitCmd() *cobra.Command {
 				}
 				defer d.Close()
 
+				if framework != "" {
+					if _, perr := profile.Load(framework, p.ProfilesDir()); perr != nil {
+						return perr
+					}
+				}
+
 				repo, created, err := gate.Init(cmd.Context(), d, p, ".")
 				if err != nil {
 					return fmt.Errorf("init: %w", err)
+				}
+
+				if framework != "" {
+					if werr := writeFrameworkConfig(repo.WorkingPath, strings.ToLower(framework)); werr != nil {
+						fmt.Fprintf(cmd.OutOrStdout(), "  %s  %s\n", sDim.Render("config"), sYellow.Render("framework not written: "+werr.Error()))
+					}
 				}
 				if err := daemon.EnsureDaemon(p); err != nil {
 					// Only roll back a gate we created in this run; a re-init
@@ -78,4 +97,20 @@ func newInitCmd() *cobra.Command {
 			})
 		},
 	}
+	cmd.Flags().StringVar(&framework, "framework", "", "framework profile to scaffold into .greenlight.yaml (e.g. angular, react, node, go, rails)")
+	return cmd
+}
+
+// writeFrameworkConfig creates a minimal .greenlight.yaml selecting the given
+// framework profile. It never clobbers an existing config: if the file is
+// present, the caller is expected to add `framework:` manually.
+func writeFrameworkConfig(repoDir, framework string) error {
+	path := filepath.Join(repoDir, ".greenlight.yaml")
+	if _, err := os.Stat(path); err == nil {
+		return fmt.Errorf(".greenlight.yaml already exists; add `framework: %s` manually", framework)
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	content := fmt.Sprintf("# greenlight config — see `greenlight profiles`\nframework: %s\n", framework)
+	return os.WriteFile(path, []byte(content), 0o644)
 }

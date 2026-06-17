@@ -34,6 +34,10 @@ func (p *Paths) DB() string         { return filepath.Join(p.root, "state.sqlite
 func (p *Paths) Socket() string     { return filepath.Join(p.root, "socket") }
 func (p *Paths) PIDFile() string    { return filepath.Join(p.root, "daemon.pid") }
 func (p *Paths) ConfigFile() string { return filepath.Join(p.root, "config.yaml") }
+
+// ProfilesDir is where user-defined framework profiles (<name>.md) live.
+// A profile here overrides the built-in of the same name.
+func (p *Paths) ProfilesDir() string { return filepath.Join(p.root, "profiles") }
 func (p *Paths) UpdateCheckFile() string {
 	return filepath.Join(p.root, "update-check.json")
 }

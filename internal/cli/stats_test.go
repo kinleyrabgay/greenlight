@@ -51,7 +51,7 @@ func TestStatsCommandRendersAllRepoDashboard(t *testing.T) {
 
 	for _, want := range []string{
 		"╭─ git push greenlight",
-		"_  _ ____    _  _ _ ____ ___ ____ _  _ ____ ____",
+		"____ ____ ____ ____ _  _ _    _ ____ _  _ ___",
 		"Total changes",
 		"Rescued changes",
 		"Rescue rate",
@@ -123,7 +123,7 @@ func TestStatsDashboardCentersBannerAsBlock(t *testing.T) {
 	lines := strings.Split(out, "\n")
 	var bannerLines []string
 	for _, line := range lines {
-		if strings.Contains(line, "_  _ ____") || strings.Contains(line, `|\ | |  |`) || strings.Contains(line, `| \| |__|`) {
+		if strings.Contains(line, "____ ____ ____ ____") || strings.Contains(line, `| __ |__/ |___`) || strings.Contains(line, `|__] |  \ |___`) {
 			bannerLines = append(bannerLines, strings.TrimSuffix(strings.TrimPrefix(line, "│ "), " │"))
 		}
 	}
@@ -142,7 +142,7 @@ func TestStatsDashboardCentersBannerAsBlock(t *testing.T) {
 func TestStatsDashboardStylesBannerAndProgressBars(t *testing.T) {
 	lipgloss.SetColorProfile(termenv.ANSI)
 	out := renderStatsDashboard(&db.Stats{TotalRuns: 1, RescueRuns: 1, ReportedFindings: 2, FixedFindings: 1})
-	if !strings.Contains(out, sCyan.Render("_  _ ____    _  _ _ ____ ___ ____ _  _ ____ ____")) {
+	if !strings.Contains(out, sCyan.Render("____ ____ ____ ____ _  _ _    _ ____ _  _ ___")) {
 		t.Fatalf("stats banner should be cyan:\n%s", out)
 	}
 	if !strings.Contains(out, "\x1b[32m") {

@@ -17,6 +17,7 @@ import (
 	"github.com/kinleyrabgay/greenlight/internal/git"
 	"github.com/kinleyrabgay/greenlight/internal/ipc"
 	"github.com/kinleyrabgay/greenlight/internal/paths"
+	"github.com/kinleyrabgay/greenlight/internal/profile"
 	"github.com/kinleyrabgay/greenlight/internal/pipeline"
 	"github.com/kinleyrabgay/greenlight/internal/pipeline/steps"
 	"github.com/kinleyrabgay/greenlight/internal/telemetry"
@@ -310,6 +311,18 @@ func (m *RunManager) startRun(ctx context.Context, repo *db.Repo, branch, headSH
 		return "", fmt.Errorf("load repo config: %w", err)
 	}
 	cfg := config.Merge(globalCfg, repoCfg)
+
+	// Apply the framework profile (repo `framework:` field, else auto-detect)
+	// to supply default commands/ignore patterns and inject review rules.
+	// Best-effort: an unknown or unreadable profile must not fail the run.
+	if fw := config.ResolveFramework("", repoCfg.Framework, wtDir); fw != "" {
+		if prof, perr := profile.Load(fw, m.paths.ProfilesDir()); perr != nil {
+			slog.Warn("skipping framework profile", "framework", fw, "error", perr)
+		} else {
+			config.ApplyProfile(cfg, prof)
+			slog.Info("applied framework profile", "framework", prof.Name)
+		}
+	}
 
 	// Create agent. In demo mode, skip resolution and use a no-op agent.
 	var ag agent.Agent

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kinleyrabgay/greenlight/internal/profile"
 	"github.com/kinleyrabgay/greenlight/internal/types"
 	"gopkg.in/yaml.v3"
 )
@@ -48,6 +49,7 @@ type globalConfigRaw struct {
 // RepoConfig represents .greenlight.yaml in a repo root.
 type RepoConfig struct {
 	Agent          types.AgentName `yaml:"agent"`
+	Framework      string          `yaml:"framework"`
 	Commands       Commands        `yaml:"commands"`
 	IgnorePatterns []string        `yaml:"ignore_patterns"`
 	AutoFix        AutoFixRaw      `yaml:"auto_fix"`
@@ -99,6 +101,11 @@ type Config struct {
 	AutoFix              AutoFix
 	Intent               Intent
 	Test                 Test
+	// Framework is the resolved profile name (empty if none).
+	Framework string
+	// FrameworkRules is the markdown rules body from the active profile,
+	// injected into review/document agent prompts.
+	FrameworkRules string
 }
 
 // TestRaw is the YAML representation of test-step settings.
@@ -669,4 +676,41 @@ func Merge(global *GlobalConfig, repo *RepoConfig) *Config {
 	}
 
 	return cfg
+}
+
+// ResolveFramework picks the active framework profile name using precedence:
+// explicit flag override > repo `framework:` field > auto-detection from
+// repoDir. Returns "" when nothing matches.
+func ResolveFramework(flagOverride, repoField, repoDir string) string {
+	if name := strings.TrimSpace(flagOverride); name != "" {
+		return strings.ToLower(name)
+	}
+	if name := strings.TrimSpace(repoField); name != "" {
+		return strings.ToLower(name)
+	}
+	return profile.Detect(repoDir)
+}
+
+// ApplyProfile folds a framework profile into cfg. Profile commands and
+// ignore patterns act as defaults: an explicitly-set repo value always wins,
+// the profile only fills what the repo left empty. The profile's rules body
+// is stored for prompt injection. A nil profile is a no-op.
+func ApplyProfile(cfg *Config, p *profile.Profile) {
+	if cfg == nil || p == nil {
+		return
+	}
+	cfg.Framework = p.Name
+	cfg.FrameworkRules = p.Rules
+	if cfg.Commands.Lint == "" {
+		cfg.Commands.Lint = p.Lint
+	}
+	if cfg.Commands.Test == "" {
+		cfg.Commands.Test = p.Test
+	}
+	if cfg.Commands.Format == "" {
+		cfg.Commands.Format = p.Format
+	}
+	if len(cfg.IgnorePatterns) == 0 {
+		cfg.IgnorePatterns = p.IgnorePatterns
+	}
 }
