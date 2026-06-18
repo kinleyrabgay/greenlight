@@ -38,20 +38,72 @@ Or from source:
 go build -o ~/bin/greenlight ./cmd/greenlight
 ```
 
-## Quick start
+## Step-by-step
+
+### 0. Prerequisites
+
+- **git** and a repo with an `origin` remote.
+- **[gh](https://cli.github.com/)**, authenticated (`gh auth login`) — needed for the PR and CI steps.
+- A **coding agent** on `PATH`: `claude`, `codex`, `opencode`, `acli` (Rovo Dev), or `pi`.
+
+Check everything at once:
 
 ```sh
-greenlight init                 # set up the gate in this repo
-greenlight init --framework go  # ...or scaffold a framework profile too
-
-git checkout -b my-branch
-# ...do some work...
-
-git push greenlight             # run the pipeline
-greenlight                      # open the TUI to act on findings
+greenlight doctor
 ```
 
-`init` installs the `/greenlight` agent skill (Claude Code, Codex, OpenCode, Rovo Dev, Pi). Under the hood it drives `greenlight axi`, a non-interactive interface to the same flow.
+### 1. Install greenlight
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/kinleyrabgay/greenlight/main/docs/install.sh | sh
+# or from source:  go build -o ~/bin/greenlight ./cmd/greenlight
+```
+
+### 2. Initialize the gate (once per repo)
+
+From inside the repo:
+
+```sh
+greenlight init                      # sets up the gate + daemon + /greenlight skill
+greenlight init --framework angular  # ...and scaffold a framework profile (optional)
+```
+
+This creates a `greenlight` git remote, starts the background daemon, and installs the `/greenlight` agent skill. Re-running is safe.
+
+### 3. Work on a feature branch
+
+The gate validates committed history on a **non-default** branch:
+
+```sh
+git checkout -b my-feature
+# ...make changes...
+git add -A && git commit -m "my change"
+```
+
+### 4. Run the pipeline
+
+Push to `greenlight` instead of `origin`:
+
+```sh
+git push greenlight
+```
+
+### 5. Act on findings
+
+```sh
+greenlight        # open the TUI for the active run
+```
+
+Each step that needs a decision shows **findings**. For each: **approve** (accept as-is), **fix** (let the pipeline fix it), or **skip**. Auto-fixable findings can be applied for you. Once every step is green, greenlight pushes to `origin` and opens the PR — no manual `git push origin`, no hand-written PR body.
+
+### Optional: let your agent drive it
+
+```
+/greenlight                         # gate the work you already committed
+/greenlight add a --json flag ...   # do the task, then gate it
+```
+
+`init` installs `/greenlight` for Claude Code, Codex, OpenCode, Rovo Dev, and Pi. Under the hood it drives `greenlight axi`, a non-interactive interface to the same flow.
 
 ## Three ways to trigger the gate
 
