@@ -50,6 +50,7 @@ type globalConfigRaw struct {
 type RepoConfig struct {
 	Agent          types.AgentName `yaml:"agent"`
 	Framework      string          `yaml:"framework"`
+	Base           string          `yaml:"base"`
 	Commands       Commands        `yaml:"commands"`
 	IgnorePatterns []string        `yaml:"ignore_patterns"`
 	AutoFix        AutoFixRaw      `yaml:"auto_fix"`
@@ -101,6 +102,9 @@ type Config struct {
 	AutoFix              AutoFix
 	Intent               Intent
 	Test                 Test
+	// Base overrides the branch the pipeline rebases onto and targets the PR
+	// against. Empty means use the repo's detected default branch.
+	Base string
 	// Framework is the resolved profile name (empty if none).
 	Framework string
 	// FrameworkRules is the markdown rules body from the active profile,
@@ -664,6 +668,7 @@ func Merge(global *GlobalConfig, repo *RepoConfig) *Config {
 		AgentArgsOverride:    global.AgentArgsOverride,
 		CITimeout:            global.CITimeout,
 		LogLevel:             global.LogLevel,
+		Base:                 repo.Base,
 		Commands:             repo.Commands,
 		IgnorePatterns:       repo.IgnorePatterns,
 		AutoFix:              af,

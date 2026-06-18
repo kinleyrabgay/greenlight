@@ -12,6 +12,8 @@ Per-repo values override global ones. Neither file is required: with no config, 
 ```yaml
 framework: angular        # framework profile (see below); omit to auto-detect
 
+base: main                # branch to rebase onto + target the PR against; omit to use the repo default
+
 agent: claude             # claude | codex | rovodev | opencode | pi | acp:<target>
 
 commands:                 # explicit step commands; override the profile's
@@ -45,6 +47,7 @@ test:
 | Field | Purpose |
 |---|---|
 | `framework` | Selects a framework profile (commands + ignore patterns + review rules). |
+| `base` | Branch the pipeline rebases onto and targets the PR against. Defaults to the repo's detected default branch — set it for release-branch or non-`main` workflows. |
 | `agent` | Overrides the global agent for this repo. `auto` picks the first agent found on `PATH`. |
 | `commands.lint` / `.test` / `.format` | Exact shell commands run for those steps. Empty = the agent auto-detects. Set values override the framework profile. |
 | `ignore_patterns` | Basename glob (`*.generated.ts`), subtree (`vendor/**`), or full-path glob. Overrides the profile when non-empty. |

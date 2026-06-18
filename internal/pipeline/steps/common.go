@@ -2,10 +2,28 @@ package steps
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/kinleyrabgay/greenlight/internal/pipeline"
 	"github.com/kinleyrabgay/greenlight/internal/types"
 )
+
+// effectiveBaseBranch returns the branch the pipeline rebases onto and targets
+// PRs against: the configured `base` override, else the repo's detected default
+// branch, else "main".
+func effectiveBaseBranch(sctx *pipeline.StepContext) string {
+	if sctx != nil && sctx.Config != nil {
+		if b := strings.TrimSpace(sctx.Config.Base); b != "" {
+			return b
+		}
+	}
+	if sctx != nil && sctx.Repo != nil {
+		if b := strings.TrimSpace(sctx.Repo.DefaultBranch); b != "" {
+			return b
+		}
+	}
+	return "main"
+}
 
 // Finding represents a single code review or lint finding.
 type Finding = types.Finding

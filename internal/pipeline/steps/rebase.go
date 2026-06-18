@@ -24,10 +24,9 @@ func (s *RebaseStep) Name() types.StepName { return types.StepRebase }
 func (s *RebaseStep) Execute(sctx *pipeline.StepContext) (*pipeline.StepOutcome, error) {
 	ctx := sctx.Ctx
 	branch := strings.TrimPrefix(sctx.Run.Branch, "refs/heads/")
-	defaultBranch := strings.TrimSpace(sctx.Repo.DefaultBranch)
-	if defaultBranch == "" {
-		defaultBranch = "main"
-	}
+	// The branch we sync/rebase onto: the configured `base` override, else the
+	// repo's detected default branch.
+	defaultBranch := effectiveBaseBranch(sctx)
 
 	// Detect force push before fetching so we can skip origin/<branch> sync.
 	// A force push means the user explicitly rewrote the branch - the pushed
