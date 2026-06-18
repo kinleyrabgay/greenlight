@@ -324,30 +324,24 @@ func (m *RunManager) startRun(ctx context.Context, repo *db.Repo, branch, headSH
 		}
 	}
 
-	// Create agent. In demo mode, skip resolution and use a no-op agent.
-	var ag agent.Agent
-	if steps.IsDemoMode() {
-		ag = agent.NewNoop()
-	} else {
-		if err := cfg.ResolveAgent(ctx, exec.LookPath); err != nil {
-			m.db.UpdateRunError(run.ID, err.Error())
-			trackStartFailure("resolve_agent")
-			return "", err
-		}
-		var agErr error
-		ag, agErr = agent.NewWithOptions(cfg.Agent, cfg.AgentPath(), cfg.AgentArgs(), agent.Options{
-			ACPRegistryOverrides: cfg.ACPRegistryOverrides,
-		})
-		if agErr != nil {
-			m.db.UpdateRunError(run.ID, fmt.Sprintf("create agent: %s", agErr))
-			trackStartFailure("create_agent")
-			return "", fmt.Errorf("create agent: %w", agErr)
-		}
-		// Steer every pipeline agent to keep writes inside the worktree and
-		// avoid mutating system state (e.g. brew/Homebrew touching
-		// /Applications), which triggers macOS App Management prompts.
-		ag = agent.WithSteering(ag)
+	// Create agent.
+	if err := cfg.ResolveAgent(ctx, exec.LookPath); err != nil {
+		m.db.UpdateRunError(run.ID, err.Error())
+		trackStartFailure("resolve_agent")
+		return "", err
 	}
+	ag, agErr := agent.NewWithOptions(cfg.Agent, cfg.AgentPath(), cfg.AgentArgs(), agent.Options{
+		ACPRegistryOverrides: cfg.ACPRegistryOverrides,
+	})
+	if agErr != nil {
+		m.db.UpdateRunError(run.ID, fmt.Sprintf("create agent: %s", agErr))
+		trackStartFailure("create_agent")
+		return "", fmt.Errorf("create agent: %w", agErr)
+	}
+	// Steer every pipeline agent to keep writes inside the worktree and
+	// avoid mutating system state (e.g. brew/Homebrew touching
+	// /Applications), which triggers macOS App Management prompts.
+	ag = agent.WithSteering(ag)
 
 	execSteps := m.steps()
 	telemetry.Track("run", telemetry.Fields{
@@ -356,7 +350,6 @@ func (m *RunManager) startRun(ctx context.Context, repo *db.Repo, branch, headSH
 		"agent":       string(cfg.Agent),
 		"branch_role": branchRole,
 		"step_count":  len(execSteps),
-		"demo_mode":   steps.IsDemoMode(),
 	})
 
 	// Create executor with event broadcast.
