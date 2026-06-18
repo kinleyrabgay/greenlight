@@ -50,15 +50,20 @@ func newInitCmd() *cobra.Command {
 					return fmt.Errorf("init: %w", err)
 				}
 
-				// Seed a GREENLIGHT.md audit guide in the project. The framework
-				// (explicit flag, else auto-detected) picks the seed content;
-				// with none, a generic template is written. The file is the
-				// repo's own, so an existing one is never overwritten.
+				// Resolve the framework (explicit flag, else auto-detect) and
+				// scaffold both files: a .greenlight.yaml pinning the framework
+				// and a GREENLIGHT.md audit guide seeded from its profile. Both
+				// are create-only — an existing file is never overwritten.
 				guideStatus := ""
+				configStatus := ""
 				fw := config.ResolveFramework(framework, "", repo.WorkingPath)
-				if framework != "" && fw != "" {
-					if werr := writeFrameworkConfig(repo.WorkingPath, fw); werr != nil {
-						fmt.Fprintf(cmd.OutOrStdout(), "  %s  %s\n", sDim.Render("config"), sYellow.Render("framework not written: "+werr.Error()))
+				if fw != "" {
+					if wrote, werr := writeFrameworkConfig(repo.WorkingPath, fw); werr != nil {
+						configStatus = sYellow.Render(".greenlight.yaml not written: " + werr.Error())
+					} else if wrote {
+						configStatus = sGreen.Render(".greenlight.yaml") + sDim.Render(" created (framework: "+fw+")")
+					} else {
+						configStatus = sDim.Render(".greenlight.yaml already present (left as-is)")
 					}
 				}
 				var prof *profile.Profile
@@ -109,6 +114,9 @@ func newInitCmd() *cobra.Command {
 				} else {
 					fmt.Fprintf(w, "  %s  %s %s\n", sDim.Render(" skill"), sGreen.Render("/greenlight"), sDim.Render("installed for agents at user level"))
 				}
+				if configStatus != "" {
+					fmt.Fprintf(w, "  %s  %s\n", sDim.Render("config"), configStatus)
+				}
 				if guideStatus != "" {
 					fmt.Fprintf(w, "  %s  %s\n", sDim.Render(" guide"), guideStatus)
 				}
@@ -127,15 +135,18 @@ func newInitCmd() *cobra.Command {
 }
 
 // writeFrameworkConfig creates a minimal .greenlight.yaml selecting the given
-// framework profile. It never clobbers an existing config: if the file is
-// present, the caller is expected to add `framework:` manually.
-func writeFrameworkConfig(repoDir, framework string) error {
+// framework profile. An existing config is never overwritten; in that case it
+// reports wrote=false so the caller can leave the user's config untouched.
+func writeFrameworkConfig(repoDir, framework string) (wrote bool, err error) {
 	path := filepath.Join(repoDir, ".greenlight.yaml")
-	if _, err := os.Stat(path); err == nil {
-		return fmt.Errorf(".greenlight.yaml already exists; add `framework: %s` manually", framework)
-	} else if !os.IsNotExist(err) {
-		return err
+	if _, statErr := os.Stat(path); statErr == nil {
+		return false, nil
+	} else if !os.IsNotExist(statErr) {
+		return false, statErr
 	}
 	content := fmt.Sprintf("# greenlight config — see `greenlight profiles`\nframework: %s\n", framework)
-	return os.WriteFile(path, []byte(content), 0o644)
+	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		return false, err
+	}
+	return true, nil
 }
