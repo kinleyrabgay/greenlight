@@ -169,6 +169,8 @@ func stepLabel(id stepID) string {
 		return "Branch"
 	case stepCommit:
 		return "Commit"
+	case stepBase:
+		return "Base"
 	case stepPush:
 		return "Push"
 	}

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -222,11 +223,20 @@ func runWizardWithMode(ctx context.Context, p *paths.Paths, state *repoState, sk
 	suggester := newWizardAgentSuggester(cfg, workDir, nil, nil)
 	defer suggester.Close()
 
+	// Prefill the Base step with the configured base, falling back to the
+	// repo's default branch.
+	baseDefault := strings.TrimSpace(cfg.Base)
+	if baseDefault == "" {
+		baseDefault = state.defaultBranch
+	}
+
 	wizCfg := wizard.Config{
 		Context:       ctx,
 		RepoDir:       workDir,
 		CurrentBranch: state.currentBranch,
 		DefaultBranch: state.defaultBranch,
+		BaseDefault:   baseDefault,
+		IncludeBase:   true,
 		AutoAdvance:   auto && visible,
 		NeedsBranch:   state.needsBranch(),
 		IsDirty:       state.dirty,
@@ -238,8 +248,12 @@ func runWizardWithMode(ctx context.Context, p *paths.Paths, state *repoState, sk
 		CommitAll: func(ctx context.Context, msg string) error {
 			return git.CommitAll(ctx, workDir, msg)
 		},
-		Push: func(ctx context.Context, branch string) error {
-			return git.PushWithOptions(ctx, workDir, gate.RemoteName, "refs/heads/"+branch, "", false, formatSkipPushOptions(skipSteps))
+		Push: func(ctx context.Context, branch, base string) error {
+			opts := formatSkipPushOptions(skipSteps)
+			if b := strings.TrimSpace(base); b != "" {
+				opts = append(opts, "greenlight.base="+b)
+			}
+			return git.PushWithOptions(ctx, workDir, gate.RemoteName, "refs/heads/"+branch, "", false, opts)
 		},
 		SuggestBranch: func(ctx context.Context) (string, error) {
 			return suggester.suggestBranch(ctx)

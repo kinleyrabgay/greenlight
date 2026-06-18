@@ -68,6 +68,7 @@ type PushReceivedParams struct {
 	New       string           `json:"new"`
 	SkipSteps []types.StepName `json:"skip_steps,omitempty"`
 	Intent    string           `json:"intent,omitempty"`
+	Base      string           `json:"base,omitempty"`
 }
 
 // GetRunParams requests a single run by ID.

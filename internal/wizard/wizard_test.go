@@ -16,6 +16,7 @@ type recorder struct {
 	createdBranch string
 	commitMsg     string
 	pushedBranch  string
+	pushedBase    string
 	telemetry     []wizardTelemetryEvent
 
 	createBranchErr error
@@ -43,8 +44,9 @@ func (r *recorder) deps() Config {
 			r.commitMsg = msg
 			return r.commitErr
 		},
-		Push: func(_ context.Context, branch string) error {
+		Push: func(_ context.Context, branch, base string) error {
 			r.pushedBranch = branch
+			r.pushedBase = base
 			return r.pushErr
 		},
 		SuggestBranch: func(_ context.Context) (string, error) {
@@ -103,6 +105,59 @@ func drain(m Model, cmd tea.Cmd) Model {
 func advance(m Model, msg tea.Msg) Model {
 	next, cmd := m.Update(msg)
 	return drain(next.(Model), cmd)
+}
+
+func TestBaseStep_TypedOverridePassedToPush(t *testing.T) {
+	r := &recorder{}
+	cfg := baseConfig(r)
+	cfg.CurrentBranch = "feat/x"
+	cfg.NeedsBranch = false
+	cfg.IsDirty = false // skip branch + commit
+	cfg.IncludeBase = true
+	cfg.BaseDefault = "main"
+	m := NewModel(cfg)
+	m = drain(m, m.Init())
+
+	// Active step is Base, prefilled with the default.
+	if s := m.activeStep(); s == nil || s.id != stepBase {
+		t.Fatalf("expected active base step, got %+v", s)
+	}
+	// Clear the prefill and type a release branch.
+	m.input.SetValue("release/2.0")
+	m = advance(m, tea.KeyMsg{Type: tea.KeyEnter})
+
+	// Now on Push; confirm.
+	m = advance(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")})
+
+	if r.pushedBase != "release/2.0" {
+		t.Fatalf("expected base release/2.0 passed to Push, got %q", r.pushedBase)
+	}
+	if !m.pushed {
+		t.Fatal("expected pushed = true")
+	}
+}
+
+func TestBaseStep_BlankUsesNoOverride(t *testing.T) {
+	r := &recorder{}
+	cfg := baseConfig(r)
+	cfg.CurrentBranch = "feat/x"
+	cfg.NeedsBranch = false
+	cfg.IsDirty = false
+	cfg.IncludeBase = true
+	cfg.BaseDefault = "main"
+	m := NewModel(cfg)
+	m = drain(m, m.Init())
+
+	m.input.SetValue("") // clear prefill → use repo default
+	m = advance(m, tea.KeyMsg{Type: tea.KeyEnter})
+	m = advance(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("y")})
+
+	if r.pushedBase != "" {
+		t.Fatalf("expected no base override, got %q", r.pushedBase)
+	}
+	if !m.pushed {
+		t.Fatal("expected pushed = true")
+	}
 }
 
 func TestNewModel_AllStepsPending(t *testing.T) {
@@ -1009,7 +1064,7 @@ func TestQuit_CancelsInFlightGitActions(t *testing.T) {
 				<-ctx.Done()
 				return ctx.Err()
 			}
-			cfg.Push = func(ctx context.Context, _ string) error {
+			cfg.Push = func(ctx context.Context, _, _ string) error {
 				ctxCh <- ctx
 				<-ctx.Done()
 				return ctx.Err()

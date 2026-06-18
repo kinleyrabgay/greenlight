@@ -57,6 +57,7 @@ func newDaemonNotifyPushCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			base := parseBasePushOptions(pushOptions)
 
 			p, err := paths.New()
 			if err != nil {
@@ -77,6 +78,7 @@ func newDaemonNotifyPushCmd() *cobra.Command {
 				New:       newSHA,
 				SkipSteps: skipSteps,
 				Intent:    intent,
+				Base:      base,
 			}, &result)
 		},
 	}
@@ -155,6 +157,19 @@ func parseIntentPushOptions(options []string) (string, error) {
 		intent = string(decoded)
 	}
 	return intent, nil
+}
+
+// parseBasePushOptions returns the base-branch override from a
+// greenlight.base=<branch> push option, or "" when none is set. The last
+// occurrence wins.
+func parseBasePushOptions(options []string) string {
+	base := ""
+	for _, option := range options {
+		if value, ok := strings.CutPrefix(option, "greenlight.base="); ok {
+			base = strings.TrimSpace(value)
+		}
+	}
+	return base
 }
 
 func formatSkipPushOptions(steps []types.StepName) []string {

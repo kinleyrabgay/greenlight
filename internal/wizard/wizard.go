@@ -41,9 +41,16 @@ type Config struct {
 	// terminal-title reset sequence emitted when the wizard shuts down.
 	Output io.Writer
 
+	// IncludeBase adds the Base step to the wizard, letting the user pick the
+	// branch the pipeline rebases onto and targets the PR against.
+	IncludeBase bool
+	// BaseDefault prefills the Base step and is used verbatim by the headless
+	// RunAuto path. Typically the repo's configured `base:` or default branch.
+	BaseDefault string
+
 	CreateBranch  func(ctx context.Context, name string) error
 	CommitAll     func(ctx context.Context, msg string) error
-	Push          func(ctx context.Context, branch string) error
+	Push          func(ctx context.Context, branch, base string) error
 	SuggestBranch func(ctx context.Context) (string, error)
 	SuggestCommit func(ctx context.Context) (string, error)
 	Track         func(action string, fields map[string]any)
@@ -60,6 +67,7 @@ type stepID int
 const (
 	stepBranch stepID = iota
 	stepCommit
+	stepBase
 	stepPush
 )
 
@@ -98,6 +106,7 @@ type Model struct {
 	input textinput.Model
 
 	targetBranch string // the branch we intend to end up on / push
+	targetBase   string // base branch override sent with the push (blank = repo default)
 
 	// Tracks side-effects for abort-copy and for the final Result.
 	branchCreated bool
@@ -156,6 +165,7 @@ func NewModel(cfg Config) Model {
 		cancel:       cancel,
 		input:        ti,
 		targetBranch: cfg.CurrentBranch,
+		targetBase:   strings.TrimSpace(cfg.BaseDefault),
 	}
 
 	branch := &step{id: stepBranch, status: statPending}
@@ -170,7 +180,11 @@ func NewModel(cfg Config) Model {
 		commit.status = statSkipped
 		commit.skipReason = "no uncommitted changes"
 	}
-	m.steps = []*step{branch, commit, push}
+	m.steps = []*step{branch, commit}
+	if cfg.IncludeBase {
+		m.steps = append(m.steps, &step{id: stepBase, status: statPending})
+	}
+	m.steps = append(m.steps, push)
 	m.active = m.firstPending()
 	m = m.setupActive()
 	return m
@@ -283,6 +297,12 @@ func (m Model) setupActive() Model {
 		m.input.SetValue("")
 		m.input.Focus()
 		m.input.Placeholder = "blank = let agent suggest"
+	case stepBase:
+		s.status = statInput
+		m.input.SetValue(strings.TrimSpace(m.cfg.BaseDefault))
+		m.input.CursorEnd()
+		m.input.Focus()
+		m.input.Placeholder = "blank = repo default branch"
 	case stepPush:
 		s.status = statConfirm
 		m.input.Blur()
@@ -379,8 +399,9 @@ func (m Model) handleInputKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "enter":
 		value := strings.TrimSpace(m.input.Value())
-		if value == "" {
-			// Agent suggestion path.
+		if value == "" && s.id != stepBase {
+			// Agent suggestion path (branch/commit). Base has no agent step:
+			// blank simply means "use the repo default base".
 			s.status = statAgent
 			s.source = "agent"
 			return m, tea.Batch(m.suggestCmd(s.id), m.scheduleSpinner())
@@ -424,9 +445,23 @@ func (m Model) handleFailedKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 // executeStep runs the git action for the step. For branch/commit, value is
 // the user-supplied or agent-generated string. For push, value is ignored.
 func (m *Model) executeStep(s *step, value string) (tea.Model, tea.Cmd) {
+	m.input.Blur()
+	// Base is a local choice, not a git action: record it and advance
+	// immediately instead of dispatching an async command.
+	if s.id == stepBase {
+		m.targetBase = value
+		s.result = value
+		if value == "" {
+			s.result = "repo default"
+		}
+		s.status = statDone
+		m.track("base_set", map[string]any{"step": stepName(s.id), "source": stepSource(s.source)})
+		m.active = m.firstPending()
+		m2 := m.setupActive()
+		return m2, m2.afterEnterCmd()
+	}
 	s.status = statRunning
 	s.result = value
-	m.input.Blur()
 	switch s.id {
 	case stepBranch:
 		return *m, tea.Batch(m.runCreateBranch(value), m.scheduleSpinner())
@@ -690,8 +725,9 @@ func (m Model) runCommit(msg string) tea.Cmd {
 
 func (m Model) runPush() tea.Cmd {
 	branch := m.targetBranch
+	base := m.targetBase
 	return func() tea.Msg {
-		err := m.cfg.Push(m.ctx, branch)
+		err := m.cfg.Push(m.ctx, branch, base)
 		return actionMsg{id: stepPush, err: err}
 	}
 }
@@ -820,7 +856,7 @@ func RunAuto(cfg Config) (Result, error) {
 		res.Err = err
 		return res, err
 	}
-	if err := cfg.Push(ctx, res.TargetBranch); err != nil {
+	if err := cfg.Push(ctx, res.TargetBranch, strings.TrimSpace(cfg.BaseDefault)); err != nil {
 		err = fmt.Errorf("push branch: %w", err)
 		res.Err = err
 		return res, err
@@ -842,6 +878,8 @@ func stepName(id stepID) string {
 		return "branch"
 	case stepCommit:
 		return "commit"
+	case stepBase:
+		return "base"
 	case stepPush:
 		return "push"
 	default:
@@ -855,6 +893,8 @@ func stepActionLabel(id stepID) string {
 		return "create branch"
 	case stepCommit:
 		return "commit changes"
+	case stepBase:
+		return "set base branch"
 	case stepPush:
 		return "push branch"
 	default:
