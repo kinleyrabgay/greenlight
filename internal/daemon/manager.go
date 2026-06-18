@@ -277,9 +277,12 @@ func (m *RunManager) startRun(ctx context.Context, repo *db.Repo, branch, headSH
 		return "", fmt.Errorf("create worktree: %w", err)
 	}
 	if err := git.CopyLocalUserIdentity(ctx, repo.WorkingPath, wtDir); err != nil {
-		m.db.UpdateRunError(run.ID, fmt.Sprintf("configure worktree git identity: %s", err))
-		trackStartFailure("configure_worktree_identity")
-		return "", fmt.Errorf("configure worktree git identity: %w", err)
+		// Non-fatal: the working repo may be unreadable to the detached daemon
+		// (e.g. a macOS TCC-protected path like ~/Desktop, ~/Documents). The
+		// repo-local identity is only an override, so fall back to the user's
+		// global git identity rather than failing the whole run.
+		slog.Warn("could not copy repo-local git identity; using global identity",
+			"run_id", run.ID, "working_path", repo.WorkingPath, "error", err)
 	}
 	if repo.DefaultBranch != "" {
 		if err := git.FetchRemoteBranch(ctx, wtDir, "origin", repo.DefaultBranch); err != nil {
