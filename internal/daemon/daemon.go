@@ -26,7 +26,7 @@ var createDaemonPIDTempFile = os.CreateTemp
 var renameDaemonPIDFile = os.Rename
 
 // Run starts the daemon process. It blocks until a shutdown signal is received
-// or the shutdown IPC method is called. This is called when NM_DAEMON=1 or via
+// or the shutdown IPC method is called. This is called when GREENLIGHT_DAEMON=1 or via
 // the hidden `greenlight daemon run` entrypoint used by the managed service.
 func Run() error {
 	p, err := paths.New()
@@ -58,7 +58,7 @@ func Run() error {
 }
 
 func prepareDaemonEnvironment() error {
-	nmHome := os.Getenv("NM_HOME")
+	nmHome := os.Getenv("GREENLIGHT_HOME")
 	for _, key := range []string{
 		"CLAUDECODE",
 		"CLAUDE_CODE_ENTRYPOINT",
@@ -74,8 +74,8 @@ func prepareDaemonEnvironment() error {
 		return fmt.Errorf("apply login shell environment: %w", err)
 	}
 	if nmHome != "" {
-		if err := os.Setenv("NM_HOME", nmHome); err != nil {
-			return fmt.Errorf("restore NM_HOME: %w", err)
+		if err := os.Setenv("GREENLIGHT_HOME", nmHome); err != nil {
+			return fmt.Errorf("restore GREENLIGHT_HOME: %w", err)
 		}
 	}
 	logDaemonPathSummary()

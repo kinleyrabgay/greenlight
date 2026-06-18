@@ -9,7 +9,7 @@ import (
 
 func TestCLILogWriterReturnsDiscardWhenLogsDirMissing(t *testing.T) {
 	nmHome := t.TempDir()
-	t.Setenv("NM_HOME", nmHome)
+	t.Setenv("GREENLIGHT_HOME", nmHome)
 
 	w := cliLogWriter()
 	if _, err := w.Write([]byte("hello\n")); err != nil {
@@ -27,7 +27,7 @@ func TestCLILogWriterReturnsDiscardWhenLogsDirMissing(t *testing.T) {
 
 func TestCLILogWriterAppendsToFileWhenLogsDirExists(t *testing.T) {
 	nmHome := t.TempDir()
-	t.Setenv("NM_HOME", nmHome)
+	t.Setenv("GREENLIGHT_HOME", nmHome)
 
 	logsDir := filepath.Join(nmHome, "logs")
 	if err := os.MkdirAll(logsDir, 0o755); err != nil {
@@ -54,7 +54,7 @@ func TestCLILogWriterAppendsToFileWhenLogsDirExists(t *testing.T) {
 }
 
 func TestDaemonRunRootFromArgs(t *testing.T) {
-	t.Setenv("NM_DAEMON", "")
+	t.Setenv("GREENLIGHT_DAEMON", "")
 
 	tests := []struct {
 		name     string
@@ -95,7 +95,7 @@ func TestDaemonRunRootFromArgs(t *testing.T) {
 }
 
 func TestDaemonRunRootFromArgs_EnvForcesDaemonMode(t *testing.T) {
-	t.Setenv("NM_DAEMON", "1")
+	t.Setenv("GREENLIGHT_DAEMON", "1")
 
 	gotRoot, gotOK, err := daemonRunRootFromArgs([]string{"status"})
 	if err != nil {

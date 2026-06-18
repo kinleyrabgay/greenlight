@@ -54,12 +54,12 @@ func TestNonInteractiveEnv_OverridesAmbientEditor(t *testing.T) {
 }
 
 func TestNonInteractiveEnv_PreservesAmbientEnv(t *testing.T) {
-	t.Setenv("NM_ENV_PROBE_XYZ", "kept")
+	t.Setenv("GREENLIGHT_ENV_PROBE_XYZ", "kept")
 
 	got := resolveEnv(NonInteractiveEnv(""))
 
-	if got["NM_ENV_PROBE_XYZ"] != "kept" {
-		t.Errorf("ambient env not preserved: NM_ENV_PROBE_XYZ = %q, want \"kept\"", got["NM_ENV_PROBE_XYZ"])
+	if got["GREENLIGHT_ENV_PROBE_XYZ"] != "kept" {
+		t.Errorf("ambient env not preserved: GREENLIGHT_ENV_PROBE_XYZ = %q, want \"kept\"", got["GREENLIGHT_ENV_PROBE_XYZ"])
 	}
 }
 

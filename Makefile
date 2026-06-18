@@ -13,7 +13,7 @@ LDFLAGS := -X github.com/kinleyrabgay/greenlight/internal/buildinfo.Version=$(VE
            -X github.com/kinleyrabgay/greenlight/internal/buildinfo.TelemetryHost=$(UMAMI_HOST) \
            -X github.com/kinleyrabgay/greenlight/internal/buildinfo.TelemetryWebsiteID=$(UMAMI_WEBSITE_ID)
 
-.PHONY: build dist install test e2e e2e-record lint fmt clean docs docs-build docs-preview demo skill skill-check
+.PHONY: build dist install test e2e e2e-record lint fmt clean skill skill-check
 
 DIST_DIR ?= dist
 INSTALL_BIN := $(shell go env GOPATH)/bin/greenlight
@@ -82,33 +82,6 @@ lint: skill-check
 
 fmt:
 	gofmt -w .
-
-docs: docs-build
-
-docs-build:
-	cd docs && npm ci && npm run build
-
-docs-preview:
-	cd docs && npm run preview
-
-demo: build
-	vhs demo.tape
-	ffmpeg -i demo_raw.gif -filter_complex "\
-		[0:v]split[orig][zoom_src];\
-		[zoom_src]crop=963:570:0:0,scale=1100:650:flags=lanczos[zoomed];\
-		[orig]scale=1100:650:flags=lanczos[base];\
-		[base][zoomed]overlay=0:0:enable='lt(t,4.04)',setpts=1.9*PTS,\
-		split[s0][s1];\
-		[s0]palettegen=max_colors=128[p];\
-		[s1][p]paletteuse=dither=sierra2_4a\
-	" -r 10 -y demo.gif
-	ffmpeg -i demo_raw.gif -filter_complex "\
-		[0:v]split[orig][zoom_src];\
-		[zoom_src]crop=963:570:0:0,scale=1100:650:flags=lanczos[zoomed];\
-		[orig]scale=1100:650:flags=lanczos[base];\
-		[base][zoomed]overlay=0:0:enable='lt(t,4.04)',setpts=1.9*PTS\
-	" -c:v libx264 -pix_fmt yuv420p -movflags +faststart -r 30 -y demo.mp4
-	rm -f demo_raw.gif
 
 clean:
 	rm -rf bin/

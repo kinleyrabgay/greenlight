@@ -20,7 +20,7 @@ import (
 )
 
 func init() {
-	if os.Getenv("NM_FAKE_BIN") == "1" {
+	if os.Getenv("GREENLIGHT_FAKE_BIN") == "1" {
 		name := filepath.Base(os.Args[0])
 		if ext := filepath.Ext(name); ext != "" {
 			name = strings.TrimSuffix(name, ext)
@@ -38,14 +38,14 @@ func init() {
 			os.Exit(1)
 		}
 	}
-	if os.Getenv("NM_HOOK_HELPER") == "1" {
+	if os.Getenv("GREENLIGHT_HOOK_HELPER") == "1" {
 		if err := newRootCmd().Execute(); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 		os.Exit(0)
 	}
-	if os.Getenv("NM_DAEMON") != "1" || os.Getenv("NM_TEST_START_DAEMON") != "1" {
+	if os.Getenv("GREENLIGHT_DAEMON") != "1" || os.Getenv("GREENLIGHT_TEST_START_DAEMON") != "1" {
 		return
 	}
 	if err := daemon.Run(); err != nil {
@@ -56,16 +56,16 @@ func init() {
 }
 
 // setupTestRepo creates a git repo with an origin remote in a temp dir and
-// sets NM_HOME to an isolated temp dir. Returns the repo path and a cleanup
-// function that restores the original working directory and NM_HOME.
+// sets GREENLIGHT_HOME to an isolated temp dir. Returns the repo path and a cleanup
+// function that restores the original working directory and GREENLIGHT_HOME.
 func setupTestRepo(t *testing.T) string {
 	t.Helper()
 
-	// Keep NM_HOME under a short temp root so the daemon socket path fits.
+	// Keep GREENLIGHT_HOME under a short temp root so the daemon socket path fits.
 	repoDir := t.TempDir()
 	nmHome := makeSocketSafeTempDir(t)
-	t.Setenv("NM_HOME", nmHome)
-	t.Setenv("NM_TEST_START_DAEMON", "1")
+	t.Setenv("GREENLIGHT_HOME", nmHome)
+	t.Setenv("GREENLIGHT_TEST_START_DAEMON", "1")
 
 	// Create a bare "origin" to use as the upstream.
 	originDir := filepath.Join(t.TempDir(), "origin.git")
@@ -226,7 +226,7 @@ func cleanupWorktree(t *testing.T, repoDir, wtDir string) {
 
 	t.Cleanup(func() {
 		_ = os.Chdir(repoDir)
-		p := paths.WithRoot(os.Getenv("NM_HOME"))
+		p := paths.WithRoot(os.Getenv("GREENLIGHT_HOME"))
 		_ = daemon.Stop(p)
 		if runtime.GOOS == "windows" {
 			time.Sleep(500 * time.Millisecond)
@@ -280,7 +280,7 @@ func makeSocketSafeTempDir(t *testing.T) string {
 	if runtime.GOOS != "windows" {
 		base = "/tmp"
 	}
-	dir, err := os.MkdirTemp(base, "nmh-")
+	dir, err := os.MkdirTemp(base, "glh-")
 	if err != nil {
 		t.Fatal(err)
 	}

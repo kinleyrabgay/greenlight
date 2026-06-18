@@ -18,7 +18,7 @@ func TestPostReceiveHookScript(t *testing.T) {
 		t.Fatal("hook should start with #!/bin/sh")
 	}
 
-	if !strings.Contains(script, "NM_BIN='/opt/Greenlight/greenlight'") {
+	if !strings.Contains(script, "GREENLIGHT_BIN='/opt/Greenlight/greenlight'") {
 		t.Fatal("hook should embed the greenlight executable path")
 	}
 
@@ -45,7 +45,7 @@ func TestPostReceiveHookScript(t *testing.T) {
 	if strings.Contains(script, "eval") {
 		t.Fatal("hook should not use eval to read push options")
 	}
-	if !strings.Contains(script, "\"$NM_BIN\" daemon notify-push") {
+	if !strings.Contains(script, "\"$GREENLIGHT_BIN\" daemon notify-push") {
 		t.Fatal("hook should execute the embedded binary path")
 	}
 	if !strings.Contains(script, "command -v greenlight") {
@@ -108,7 +108,7 @@ func TestShellSingleQuote(t *testing.T) {
 
 func TestPostReceiveHookScriptWithQuotedPath(t *testing.T) {
 	script := postReceiveHookScript("/opt/it's here/greenlight")
-	if !strings.Contains(script, "NM_BIN='/opt/it'\"'\"'s here/greenlight'") {
+	if !strings.Contains(script, "GREENLIGHT_BIN='/opt/it'\"'\"'s here/greenlight'") {
 		t.Fatal("hook should correctly escape single quotes in the executable path")
 	}
 }

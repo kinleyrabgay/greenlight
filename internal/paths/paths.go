@@ -6,15 +6,15 @@ import (
 )
 
 // Paths provides access to all greenlight filesystem locations.
-// The root defaults to ~/.greenlight but can be overridden via NM_HOME
+// The root defaults to ~/.greenlight but can be overridden via GREENLIGHT_HOME
 // or by using WithRoot (for testing).
 type Paths struct {
 	root string
 }
 
-// New returns Paths rooted at NM_HOME or ~/.greenlight.
+// New returns Paths rooted at GREENLIGHT_HOME or ~/.greenlight.
 func New() (*Paths, error) {
-	if env := os.Getenv("NM_HOME"); env != "" {
+	if env := os.Getenv("GREENLIGHT_HOME"); env != "" {
 		return &Paths{root: env}, nil
 	}
 	home, err := os.UserHomeDir()

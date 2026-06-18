@@ -52,9 +52,13 @@ func TestDetect(t *testing.T) {
 	cases := map[string]func(dir string){
 		"angular": func(d string) { os.WriteFile(filepath.Join(d, "angular.json"), []byte("{}"), 0o644) },
 		"go":      func(d string) { os.WriteFile(filepath.Join(d, "go.mod"), []byte("module x"), 0o644) },
-		"react":   func(d string) { os.WriteFile(filepath.Join(d, "package.json"), []byte(`{"dependencies":{"react":"18"}}`), 0o644) },
-		"node":    func(d string) { os.WriteFile(filepath.Join(d, "package.json"), []byte(`{"dependencies":{"express":"4"}}`), 0o644) },
-		"rails":   func(d string) { os.WriteFile(filepath.Join(d, "Gemfile"), []byte("gem 'rails'"), 0o644) },
+		"react": func(d string) {
+			os.WriteFile(filepath.Join(d, "package.json"), []byte(`{"dependencies":{"react":"18"}}`), 0o644)
+		},
+		"node": func(d string) {
+			os.WriteFile(filepath.Join(d, "package.json"), []byte(`{"dependencies":{"express":"4"}}`), 0o644)
+		},
+		"rails": func(d string) { os.WriteFile(filepath.Join(d, "Gemfile"), []byte("gem 'rails'"), 0o644) },
 	}
 	for want, setup := range cases {
 		dir := t.TempDir()

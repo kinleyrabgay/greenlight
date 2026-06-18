@@ -26,11 +26,11 @@ func daemonStartTimeout() time.Duration {
 	if runtimeGOOS == "windows" {
 		fallback = 15 * time.Second
 	}
-	return durationFromEnv("NM_TEST_DAEMON_START_TIMEOUT", fallback)
+	return durationFromEnv("GREENLIGHT_TEST_DAEMON_START_TIMEOUT", fallback)
 }
 
 func daemonStartPollInterval() time.Duration {
-	return durationFromEnv("NM_TEST_DAEMON_START_POLL_INTERVAL", 100*time.Millisecond)
+	return durationFromEnv("GREENLIGHT_TEST_DAEMON_START_POLL_INTERVAL", 100*time.Millisecond)
 }
 
 func durationFromEnv(name string, fallback time.Duration) time.Duration {
@@ -46,7 +46,7 @@ func durationFromEnv(name string, fallback time.Duration) time.Duration {
 }
 
 // Start installs or refreshes the managed daemon service when supported and
-// starts it, falling back to a detached re-exec with NM_DAEMON=1 when managed
+// starts it, falling back to a detached re-exec with GREENLIGHT_DAEMON=1 when managed
 // startup is unavailable or fails. It waits up to 5 seconds for the daemon to
 // become responsive on the IPC socket.
 //
@@ -229,8 +229,8 @@ func startDetachedDaemon(p *paths.Paths) error {
 	defer logFile.Close()
 
 	cmd := exec.Command(exe)
-	cmd.Env = upsertEnv(os.Environ(), "NM_HOME", p.Root())
-	cmd.Env = upsertEnv(cmd.Env, "NM_DAEMON", "1")
+	cmd.Env = upsertEnv(os.Environ(), "GREENLIGHT_HOME", p.Root())
+	cmd.Env = upsertEnv(cmd.Env, "GREENLIGHT_DAEMON", "1")
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 	// Detach from parent process group so daemon survives CLI exit.

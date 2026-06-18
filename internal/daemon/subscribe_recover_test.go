@@ -459,9 +459,9 @@ func TestRecoverRefreshesLegacyManagedGateHook(t *testing.T) {
 	legacyHook := `#!/bin/sh
 # greenlight post-receive hook
 # Notify daemon of push. Non-blocking - push always succeeds.
-NM_BIN='/usr/local/bin/greenlight'
+GREENLIGHT_BIN='/usr/local/bin/greenlight'
 while read oldrev newrev refname; do
-  NM_HOOK_HELPER=1 "$NM_BIN" daemon notify-push \
+  GREENLIGHT_HOOK_HELPER=1 "$GREENLIGHT_BIN" daemon notify-push \
     --gate "$(pwd)" \
     --ref "$refname" \
     --old "$oldrev" \

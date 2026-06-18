@@ -299,8 +299,8 @@ func newDaemonRunCmd() *cobra.Command {
 		Args:   cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if root != "" {
-				if err := os.Setenv("NM_HOME", root); err != nil {
-					return fmt.Errorf("set NM_HOME: %w", err)
+				if err := os.Setenv("GREENLIGHT_HOME", root); err != nil {
+					return fmt.Errorf("set GREENLIGHT_HOME: %w", err)
 				}
 			}
 			return daemonRun()

@@ -520,8 +520,8 @@ func assertDoctorMissingSystemDeps(t *testing.T, h *Harness) {
 	t.Helper()
 	missingHome := filepath.Join(t.TempDir(), "missing-nm-home")
 	out, err := h.RunInDirWithEnv(h.WorkDir, map[string]string{
-		"NM_HOME": missingHome,
-		"PATH":    "/nonexistent",
+		"GREENLIGHT_HOME": missingHome,
+		"PATH":            "/nonexistent",
 	}, "doctor")
 	if err != nil {
 		t.Fatalf("nm doctor with missing system deps should not exit non-zero: %v\n%s", err, out)

@@ -54,7 +54,7 @@ func TestInstallScriptReplacesExistingPathEntryWithSymlink(t *testing.T) {
 
 	runInstallScript(t, home, fakeBin, map[string]string{
 		"FAKE_RELEASE_ARCHIVE": archivePath,
-		"GREENLIGHT_LINK_DIR": linkDir,
+		"GREENLIGHT_LINK_DIR":  linkDir,
 	})
 
 	realBin := filepath.Join(home, ".greenlight", "bin", "greenlight")
@@ -77,7 +77,7 @@ func TestInstallScriptRestartsDaemonAfterInstall(t *testing.T) {
 
 	runInstallScript(t, home, fakeBin, map[string]string{
 		"FAKE_RELEASE_ARCHIVE": archivePath,
-		"GREENLIGHT_CALL_LOG": callLog,
+		"GREENLIGHT_CALL_LOG":  callLog,
 	})
 
 	data, err := os.ReadFile(callLog)
@@ -104,7 +104,7 @@ func TestInstallScriptFailsWhenDaemonRestartFails(t *testing.T) {
 
 	output, err := runInstallScriptCommand(t, home, fakeBin, map[string]string{
 		"FAKE_RELEASE_ARCHIVE": archivePath,
-		"GREENLIGHT_CALL_LOG": callLog,
+		"GREENLIGHT_CALL_LOG":  callLog,
 	})
 	if err == nil {
 		t.Fatalf("install.sh should fail when daemon restart fails\n%s", output)

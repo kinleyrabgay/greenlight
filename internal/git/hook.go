@@ -31,9 +31,9 @@ func postReceiveHookScript(command string) string {
 # ignored by git, so we never reject the push here. Instead, failures are
 # surfaced on stderr (so the pushing client sees them) and appended to
 # notify-push.log inside the bare repo for later inspection.
-NM_BIN=` + shellSingleQuote(command) + `
-if [ ! -f "$NM_BIN" ]; then
-  NM_BIN="$(command -v greenlight 2>/dev/null || echo greenlight)"
+GREENLIGHT_BIN=` + shellSingleQuote(command) + `
+if [ ! -f "$GREENLIGHT_BIN" ]; then
+  GREENLIGHT_BIN="$(command -v greenlight 2>/dev/null || echo greenlight)"
 fi
 LOG="$(pwd)/notify-push.log"
 nm_ts() { date '+%Y-%m-%dT%H:%M:%S' 2>/dev/null || echo unknown; }
@@ -49,7 +49,7 @@ while read oldrev newrev refname; do
 	    set -- "$@" --push-option "$opt"
 	    i=$((i + 1))
 	  done
-	  out=$(NM_HOOK_HELPER=1 "$NM_BIN" daemon notify-push "$@" 2>&1)
+	  out=$(GREENLIGHT_HOOK_HELPER=1 "$GREENLIGHT_BIN" daemon notify-push "$@" 2>&1)
   status=$?
   if [ $status -ne 0 ]; then
     notify_failed=1

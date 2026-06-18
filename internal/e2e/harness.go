@@ -33,7 +33,7 @@ type Harness struct {
 	NMBin       string // absolute path to the greenlight binary under test
 	FakeAgent   string // absolute path to the fake agent binary
 	BinDir      string // temp dir holding agent symlinks; prepended to PATH
-	NMHome      string // value used as $NM_HOME (daemon DB, socket, config)
+	NMHome      string // value used as $GREENLIGHT_HOME (daemon DB, socket, config)
 	HomeDir     string // value used as $HOME so git operations don't read user state
 	UpstreamDir string // bare repo serving as origin for the working clone
 	WorkDir     string // working clone where the user runs `greenlight init`
@@ -109,7 +109,7 @@ func NewHarness(t *testing.T, opts SetupOpts) *Harness {
 	// daemon re-execs itself, also inheriting them.
 	t.Setenv("PATH", h.BinDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	t.Setenv("HOME", h.HomeDir)
-	t.Setenv("NM_HOME", h.NMHome)
+	t.Setenv("GREENLIGHT_HOME", h.NMHome)
 	t.Setenv("FAKEAGENT_LOG", h.AgentLog)
 	if h.Scenario != "" {
 		t.Setenv("FAKEAGENT_SCENARIO", h.Scenario)
@@ -125,10 +125,10 @@ func NewHarness(t *testing.T, opts SetupOpts) *Harness {
 	t.Setenv("FAKEAGENT_FIXTURE", root)
 	// Skip launchd/systemd/schtasks installation in the daemon. Without
 	// this the daemon would touch the developer's real launch agents.
-	t.Setenv("NM_TEST_START_DAEMON", "1")
+	t.Setenv("GREENLIGHT_TEST_START_DAEMON", "1")
 	// Give the daemon room to come up. Startup may spend up to 30s resolving
 	// the login-shell environment before the IPC socket is opened.
-	t.Setenv("NM_TEST_DAEMON_START_TIMEOUT", e2eDaemonStartTimeout)
+	t.Setenv("GREENLIGHT_TEST_DAEMON_START_TIMEOUT", e2eDaemonStartTimeout)
 
 	// Disable telemetry attempts (the package would no-op anyway, but
 	// avoid a network DNS lookup on each command).

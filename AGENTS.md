@@ -61,7 +61,7 @@ Safest local verification sequence after non-trivial changes:
 
 - Keep `README.md` concise and high-level. The bar needs to be extremely high for what has to show up there.
 - Do not put technical details or deep reference material in `README.md`.
-- Most documentation should live in `docs/` which is the published docs site.
+- Reference material lives in `docs/` as plain Markdown: `configuration.md`, `pipeline.md`, `cli.md`.
 
 **Context, Concurrency, and Processes**
 
@@ -75,8 +75,8 @@ Safest local verification sequence after non-trivial changes:
 **Filesystem and Paths**
 
 - Use `filepath.Join` and related helpers.
-- Respect `NM_HOME` when working with app state.
-- Tests should isolate filesystem state with `t.TempDir()` and `t.Setenv("NM_HOME", ...)`.
+- Respect `GREENLIGHT_HOME` when working with app state.
+- Tests should isolate filesystem state with `t.TempDir()` and `t.Setenv("GREENLIGHT_HOME", ...)`.
 - Existing code typically uses `0o755` for directories and `0o644` for files such as logs.
 - On macOS, remember that path comparisons may need symlink resolution like `/var` vs `/private/var`.
 

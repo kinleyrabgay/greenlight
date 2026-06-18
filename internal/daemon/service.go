@@ -17,7 +17,7 @@ import (
 // Base identifiers for the managed-service artifacts. The live identifiers
 // returned by launchdServiceLabel/systemdServiceName/windowsTaskName include
 // a short stable suffix derived from p.Root() so two greenlight installs
-// with different NM_HOMEs cannot collide in the global launchctl/systemctl/
+// with different GREENLIGHT_HOMEs cannot collide in the global launchctl/systemctl/
 // schtasks namespace. See serviceInstanceSuffix for the full rationale.
 const (
 	launchdServiceLabelBase = "com.kinleyrabgay.greenlight.daemon"
@@ -43,7 +43,7 @@ var serviceManagerBypassed = defaultServiceManagerBypassed
 // defaultServiceManagerBypassed reports whether managed-service plumbing
 // (launchctl/systemctl/schtasks) should be skipped.
 //
-// It returns true when NM_TEST_START_DAEMON=1 is set (the production escape
+// It returns true when GREENLIGHT_TEST_START_DAEMON=1 is set (the production escape
 // hatch used by demo recordings and similar) or when the process is running
 // under `go test`. The test-binary guard is critical because the managed
 // service label, plist path, systemd unit path, and schtasks task name are
@@ -55,7 +55,7 @@ var serviceManagerBypassed = defaultServiceManagerBypassed
 // managed path (service_test.go) override serviceManagerBypassed via
 // stubServiceRuntime.
 func defaultServiceManagerBypassed() bool {
-	if os.Getenv("NM_TEST_START_DAEMON") == "1" {
+	if os.Getenv("GREENLIGHT_TEST_START_DAEMON") == "1" {
 		return true
 	}
 	return testing.Testing()
@@ -77,10 +77,10 @@ func defaultServiceManagerBypassed() bool {
 //
 // By scoping every identifier by sha256(p.Root()), the test's Stop(p)
 // inspects a path and label that belong to its own tmpdir, not the live
-// daemon's NM_HOME. managedServiceInstalled(p) stats a non-existent scoped
+// daemon's GREENLIGHT_HOME. managedServiceInstalled(p) stats a non-existent scoped
 // plist, returns false, and Stop never reaches serviceCommandRunner.
 //
-// A secondary benefit: multiple concurrent NM_HOMEs (e.g. a dev vs prod
+// A secondary benefit: multiple concurrent GREENLIGHT_HOMEs (e.g. a dev vs prod
 // greenlight install) each get their own managed daemon and can coexist.
 func serviceInstanceSuffix(p *paths.Paths) string {
 	root := ""

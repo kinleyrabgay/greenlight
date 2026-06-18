@@ -122,7 +122,7 @@ var reviewFindingsSchema = json.RawMessage(`{
 }`)
 
 // AllSteps returns the fixed pipeline step sequence.
-// When NM_DEMO=1, it returns mock steps for demo recordings.
+// When GREENLIGHT_DEMO=1, it returns mock steps for demo recordings.
 func AllSteps() []pipeline.Step {
 	if IsDemoMode() {
 		return DemoSteps()

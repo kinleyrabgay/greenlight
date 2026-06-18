@@ -17,9 +17,9 @@ import (
 	"github.com/kinleyrabgay/greenlight/internal/git"
 	"github.com/kinleyrabgay/greenlight/internal/ipc"
 	"github.com/kinleyrabgay/greenlight/internal/paths"
-	"github.com/kinleyrabgay/greenlight/internal/profile"
 	"github.com/kinleyrabgay/greenlight/internal/pipeline"
 	"github.com/kinleyrabgay/greenlight/internal/pipeline/steps"
+	"github.com/kinleyrabgay/greenlight/internal/profile"
 	"github.com/kinleyrabgay/greenlight/internal/telemetry"
 	"github.com/kinleyrabgay/greenlight/internal/types"
 )

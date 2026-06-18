@@ -19,7 +19,7 @@ func TestDaemonRunUsesProvidedRoot(t *testing.T) {
 	if base == "/var/folders" || strings.HasPrefix(base, "/var/folders/") {
 		base = "/tmp"
 	}
-	rootDir, err := os.MkdirTemp(base, "nmh-")
+	rootDir, err := os.MkdirTemp(base, "glh-")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func TestDaemonRunUsesProvidedRoot(t *testing.T) {
 	}()
 
 	defer func() {
-		_, _ = h.RunInDirWithEnv(h.WorkDir, map[string]string{"NM_HOME": wantRoot}, "daemon", "stop")
+		_, _ = h.RunInDirWithEnv(h.WorkDir, map[string]string{"GREENLIGHT_HOME": wantRoot}, "daemon", "stop")
 		cancel()
 		select {
 		case <-done:
@@ -63,7 +63,7 @@ func TestDaemonRunUsesProvidedRoot(t *testing.T) {
 		default:
 		}
 
-		status, err := h.RunInDirWithEnv(h.WorkDir, map[string]string{"NM_HOME": wantRoot}, "daemon", "status")
+		status, err := h.RunInDirWithEnv(h.WorkDir, map[string]string{"GREENLIGHT_HOME": wantRoot}, "daemon", "status")
 		if err == nil && strings.Contains(status, "daemon running") {
 			break
 		}
@@ -78,6 +78,6 @@ func TestDaemonRunUsesProvidedRoot(t *testing.T) {
 		t.Fatalf("default daemon status: %v\n%s", err, defaultStatus)
 	}
 	if strings.Contains(defaultStatus, "daemon running") {
-		t.Fatalf("daemon run --root should not use default NM_HOME, got status %q", defaultStatus)
+		t.Fatalf("daemon run --root should not use default GREENLIGHT_HOME, got status %q", defaultStatus)
 	}
 }

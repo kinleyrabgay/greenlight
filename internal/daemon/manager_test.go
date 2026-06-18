@@ -382,7 +382,7 @@ func TestPushReceivedTracksRunTelemetryAfterPanic(t *testing.T) {
 }
 
 func TestPushReceivedDemoModeBypassesAgentResolution(t *testing.T) {
-	t.Setenv("NM_DEMO", "1")
+	t.Setenv("GREENLIGHT_DEMO", "1")
 
 	step := &mockPassStep{name: types.StepReview}
 	p, d := startTestDaemonWithSteps(t, func() []pipeline.Step {

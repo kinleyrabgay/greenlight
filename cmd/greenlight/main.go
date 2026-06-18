@@ -26,7 +26,7 @@ func run() int {
 		return 1
 	} else if ok {
 		if root != "" {
-			if err := os.Setenv("NM_HOME", root); err != nil {
+			if err := os.Setenv("GREENLIGHT_HOME", root); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				return 1
 			}
@@ -62,7 +62,7 @@ func run() int {
 }
 
 func daemonRunRootFromArgs(args []string) (string, bool, error) {
-	if os.Getenv("NM_DAEMON") == "1" {
+	if os.Getenv("GREENLIGHT_DAEMON") == "1" {
 		return "", true, nil
 	}
 	if len(args) < 2 || args[0] != "daemon" || args[1] != "run" {

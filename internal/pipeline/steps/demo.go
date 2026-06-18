@@ -28,9 +28,9 @@ var demoWait = func(ctx context.Context, d time.Duration) bool {
 	}
 }
 
-// IsDemoMode returns true when the NM_DEMO environment variable is set.
+// IsDemoMode returns true when the GREENLIGHT_DEMO environment variable is set.
 func IsDemoMode() bool {
-	return os.Getenv("NM_DEMO") == "1"
+	return os.Getenv("GREENLIGHT_DEMO") == "1"
 }
 
 // DemoSteps returns mock pipeline steps for demo recordings.

@@ -273,7 +273,7 @@ func TestLogsNoRunHelpIncludesRequiredIntent(t *testing.T) {
 func TestAxiHomeStartsCurrentBranchWhenOtherBranchIsActive(t *testing.T) {
 	repoDir := t.TempDir()
 	nmHome := t.TempDir()
-	t.Setenv("NM_HOME", nmHome)
+	t.Setenv("GREENLIGHT_HOME", nmHome)
 	run(t, repoDir, "git", "init")
 	run(t, repoDir, "git", "config", "user.email", "test@test.com")
 	run(t, repoDir, "git", "config", "user.name", "Test")

@@ -111,7 +111,7 @@ func TestInitLegacyNotice(t *testing.T) {
 //	init: add remote: remote "greenlight" already exists with url "..."
 //
 // The test name is deliberately short: it becomes part of t.TempDir(), which
-// hosts NM_HOME, and the daemon's Unix socket path under it must stay within
+// hosts GREENLIGHT_HOME, and the daemon's Unix socket path under it must stay within
 // the OS socket path limit (104 bytes on macOS).
 func TestInitRepoRename(t *testing.T) {
 	h := NewHarness(t, SetupOpts{Agent: "claude"})
@@ -156,9 +156,9 @@ func TestInitRollsBackWhenDaemonStartFails(t *testing.T) {
 	h := NewHarness(t, SetupOpts{Agent: "claude"})
 	badNMHome := filepath.Join(t.TempDir(), strings.Repeat("a", 160))
 	env := map[string]string{
-		"NM_HOME":                            badNMHome,
-		"NM_TEST_DAEMON_START_TIMEOUT":       "200ms",
-		"NM_TEST_DAEMON_START_POLL_INTERVAL": "10ms",
+		"GREENLIGHT_HOME":                            badNMHome,
+		"GREENLIGHT_TEST_DAEMON_START_TIMEOUT":       "200ms",
+		"GREENLIGHT_TEST_DAEMON_START_POLL_INTERVAL": "10ms",
 	}
 
 	start := time.Now()

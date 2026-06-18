@@ -406,7 +406,7 @@ func TestRunWizardTracksPageview(t *testing.T) {
 	defer func() { wizardRun = prevRun }()
 
 	nmHome := makeSocketSafeTempDir(t)
-	t.Setenv("NM_HOME", nmHome)
+	t.Setenv("GREENLIGHT_HOME", nmHome)
 	p := paths.WithRoot(nmHome)
 	if err := p.EnsureDirs(); err != nil {
 		t.Fatal(err)
@@ -470,7 +470,7 @@ func TestRunWizardReturnsTerminalWizardError(t *testing.T) {
 	defer func() { wizardRun = prevRun }()
 
 	nmHome := makeSocketSafeTempDir(t)
-	t.Setenv("NM_HOME", nmHome)
+	t.Setenv("GREENLIGHT_HOME", nmHome)
 	p := paths.WithRoot(nmHome)
 	if err := p.EnsureDirs(); err != nil {
 		t.Fatal(err)
@@ -511,7 +511,7 @@ func TestRunWizard_ConfiguresServerPIDsDir(t *testing.T) {
 	defer func() { wizardRun = prevRun }()
 
 	nmHome := makeSocketSafeTempDir(t)
-	t.Setenv("NM_HOME", nmHome)
+	t.Setenv("GREENLIGHT_HOME", nmHome)
 	p := paths.WithRoot(nmHome)
 	if err := p.EnsureDirs(); err != nil {
 		t.Fatal(err)
@@ -560,7 +560,7 @@ func TestRunWizard_ConfiguresServerPIDsDir(t *testing.T) {
 // through to "No active run".
 func TestAwaitDaemonRunRegistration_ErrorsWhenNoRunAppears(t *testing.T) {
 	nmHome := makeSocketSafeTempDir(t)
-	t.Setenv("NM_HOME", nmHome)
+	t.Setenv("GREENLIGHT_HOME", nmHome)
 	p := paths.WithRoot(nmHome)
 	if err := p.EnsureDirs(); err != nil {
 		t.Fatal(err)
@@ -593,7 +593,7 @@ func TestAwaitDaemonRunRegistration_ErrorsWhenNoRunAppears(t *testing.T) {
 
 func TestAwaitDaemonRunRegistration_UsesNMHomeInTimeoutError(t *testing.T) {
 	nmHome := makeSocketSafeTempDir(t)
-	t.Setenv("NM_HOME", nmHome)
+	t.Setenv("GREENLIGHT_HOME", nmHome)
 
 	p := paths.WithRoot(nmHome)
 	if err := p.EnsureDirs(); err != nil {

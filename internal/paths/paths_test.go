@@ -68,7 +68,7 @@ func TestLogPaths(t *testing.T) {
 
 func TestNewWithEnvOverride(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("NM_HOME", dir)
+	t.Setenv("GREENLIGHT_HOME", dir)
 
 	p, err := New()
 	if err != nil {
@@ -80,7 +80,7 @@ func TestNewWithEnvOverride(t *testing.T) {
 }
 
 func TestNewDefault(t *testing.T) {
-	t.Setenv("NM_HOME", "")
+	t.Setenv("GREENLIGHT_HOME", "")
 
 	p, err := New()
 	if err != nil {

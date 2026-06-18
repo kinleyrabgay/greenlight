@@ -20,23 +20,23 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	switch os.Getenv("NM_DAEMON_HELPER_PROCESS") {
+	switch os.Getenv("GREENLIGHT_DAEMON_HELPER_PROCESS") {
 	case "1":
-		if capturePath := os.Getenv("NM_CAPTURE_NM_HOME_FILE"); capturePath != "" {
-			_ = os.WriteFile(capturePath, []byte(os.Getenv("NM_HOME")), 0o644)
+		if capturePath := os.Getenv("GREENLIGHT_CAPTURE_HOME_FILE"); capturePath != "" {
+			_ = os.WriteFile(capturePath, []byte(os.Getenv("GREENLIGHT_HOME")), 0o644)
 		}
 		os.Exit(0)
 	case "block":
 		time.Sleep(30 * time.Second)
 		os.Exit(0)
 	}
-	// The post-receive hook embeds os.Executable() as NM_BIN. In tests that
+	// The post-receive hook embeds os.Executable() as GREENLIGHT_BIN. In tests that
 	// path is the test binary itself, so every `git push` to a bare gate
 	// would re-enter TestMain and run the whole daemon test suite inside
 	// the hook. Short-circuit: when we're being invoked as the hook's
 	// notifier, exit 0 immediately. Tests that care about the daemon seeing
 	// the push call push_received via IPC directly.
-	if os.Getenv("NM_HOOK_HELPER") == "1" {
+	if os.Getenv("GREENLIGHT_HOOK_HELPER") == "1" {
 		os.Exit(0)
 	}
 	os.Exit(m.Run())

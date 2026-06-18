@@ -75,7 +75,7 @@ func TestWaitForDaemonStopKeepsArtifactsWhenKillFails(t *testing.T) {
 }
 
 func TestDaemonStartTimeoutDefaultsToLongerWindowOnWindows(t *testing.T) {
-	t.Setenv("NM_TEST_DAEMON_START_TIMEOUT", "")
+	t.Setenv("GREENLIGHT_TEST_DAEMON_START_TIMEOUT", "")
 	oldGOOS := runtimeGOOS
 	runtimeGOOS = "windows"
 	t.Cleanup(func() { runtimeGOOS = oldGOOS })

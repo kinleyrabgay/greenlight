@@ -508,7 +508,7 @@ func TestStartFallsBackToDetachedDaemonWhenManagedStartFails(t *testing.T) {
 
 	cleanup := stubServiceRuntime(t)
 	defer cleanup()
-	t.Setenv("NM_DAEMON_HELPER_PROCESS", "1")
+	t.Setenv("GREENLIGHT_DAEMON_HELPER_PROCESS", "1")
 	runtimeGOOS = "linux"
 	serviceUserHomeDir = func() (string, error) { return home, nil }
 	serviceExecutablePath = func() (string, error) { return "/usr/local/bin/greenlight", nil }
@@ -579,9 +579,9 @@ func TestStartDetachedDaemonUsesProvidedRootViaNMHome(t *testing.T) {
 	}
 	capturePath := filepath.Join(t.TempDir(), "nm-home.txt")
 
-	t.Setenv("NM_DAEMON_HELPER_PROCESS", "1")
-	t.Setenv("NM_CAPTURE_NM_HOME_FILE", capturePath)
-	t.Setenv("NM_HOME", "")
+	t.Setenv("GREENLIGHT_DAEMON_HELPER_PROCESS", "1")
+	t.Setenv("GREENLIGHT_CAPTURE_HOME_FILE", capturePath)
+	t.Setenv("GREENLIGHT_HOME", "")
 
 	cleanup := stubServiceRuntime(t)
 	defer cleanup()
@@ -608,10 +608,10 @@ func TestStartDetachedDaemonUsesProvidedRootViaNMHome(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}
 	if err != nil {
-		t.Fatalf("read captured NM_HOME: %v", err)
+		t.Fatalf("read captured GREENLIGHT_HOME: %v", err)
 	}
 	if got := string(data); got != p.Root() {
-		t.Fatalf("child NM_HOME = %q, want %q", got, p.Root())
+		t.Fatalf("child GREENLIGHT_HOME = %q, want %q", got, p.Root())
 	}
 }
 
@@ -621,7 +621,7 @@ func TestStartDetachedDaemonCleansUpChildWhenStartTimeProbeFails(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Setenv("NM_DAEMON_HELPER_PROCESS", "block")
+	t.Setenv("GREENLIGHT_DAEMON_HELPER_PROCESS", "block")
 
 	oldStartTime := daemonProcessStartTime
 	startedPID := 0
@@ -686,9 +686,9 @@ func TestStartStopsManagedServiceBeforeDetachedFallbackAfterTimeout(t *testing.T
 
 	cleanup := stubServiceRuntime(t)
 	defer cleanup()
-	t.Setenv("NM_DAEMON_HELPER_PROCESS", "1")
-	t.Setenv("NM_TEST_DAEMON_START_TIMEOUT", "20ms")
-	t.Setenv("NM_TEST_DAEMON_START_POLL_INTERVAL", "1ms")
+	t.Setenv("GREENLIGHT_DAEMON_HELPER_PROCESS", "1")
+	t.Setenv("GREENLIGHT_TEST_DAEMON_START_TIMEOUT", "20ms")
+	t.Setenv("GREENLIGHT_TEST_DAEMON_START_POLL_INTERVAL", "1ms")
 	runtimeGOOS = "linux"
 	serviceUserHomeDir = func() (string, error) { return home, nil }
 	serviceExecutablePath = func() (string, error) { return "/usr/local/bin/greenlight", nil }
@@ -754,7 +754,7 @@ func TestStartReturnsManagedStopErrorWhenSystemdStopSaysNotLoaded(t *testing.T) 
 
 	cleanup := stubServiceRuntime(t)
 	defer cleanup()
-	t.Setenv("NM_DAEMON_HELPER_PROCESS", "1")
+	t.Setenv("GREENLIGHT_DAEMON_HELPER_PROCESS", "1")
 	runtimeGOOS = "linux"
 	serviceUserHomeDir = func() (string, error) { return home, nil }
 	serviceExecutablePath = func() (string, error) { return "/usr/local/bin/greenlight", nil }
@@ -801,7 +801,7 @@ func TestStartReturnsManagedStopErrorWhenFallbackCleanupFails(t *testing.T) {
 
 	cleanup := stubServiceRuntime(t)
 	defer cleanup()
-	t.Setenv("NM_DAEMON_HELPER_PROCESS", "1")
+	t.Setenv("GREENLIGHT_DAEMON_HELPER_PROCESS", "1")
 	runtimeGOOS = "linux"
 	serviceUserHomeDir = func() (string, error) { return home, nil }
 	serviceExecutablePath = func() (string, error) { return "/usr/local/bin/greenlight", nil }
@@ -846,7 +846,7 @@ func TestStartRemovesLaunchAgentBeforeDetachedFallbackAfterBootoutESRCH(t *testi
 
 	cleanup := stubServiceRuntime(t)
 	defer cleanup()
-	t.Setenv("NM_DAEMON_HELPER_PROCESS", "1")
+	t.Setenv("GREENLIGHT_DAEMON_HELPER_PROCESS", "1")
 	runtimeGOOS = "darwin"
 	serviceUserHomeDir = func() (string, error) { return home, nil }
 	serviceCurrentUser = func() (*user.User, error) { return &user.User{Uid: "501"}, nil }
@@ -1118,9 +1118,9 @@ func TestStartWithUnstubbedPathsDoesNotInvokeRealServiceCommands(t *testing.T) {
 	serviceManagerBypassed = defaultServiceManagerBypassed
 
 	// Force the detached fallback path to short-circuit as well: TestMain
-	// already exits immediately when NM_DAEMON_HELPER_PROCESS=1, so the
+	// already exits immediately when GREENLIGHT_DAEMON_HELPER_PROCESS=1, so the
 	// re-exec does not spawn a persistent daemon.
-	t.Setenv("NM_DAEMON_HELPER_PROCESS", "1")
+	t.Setenv("GREENLIGHT_DAEMON_HELPER_PROCESS", "1")
 
 	home := t.TempDir()
 	serviceUserHomeDir = func() (string, error) { return home, nil }
@@ -1143,7 +1143,7 @@ func TestStartWithUnstubbedPathsDoesNotInvokeRealServiceCommands(t *testing.T) {
 	}
 
 	// Start will fall back to the detached daemon which re-execs the test
-	// binary; with NM_DAEMON_HELPER_PROCESS=1 the helper exits and the
+	// binary; with GREENLIGHT_DAEMON_HELPER_PROCESS=1 the helper exits and the
 	// health check never returns ok, so Start reports "did not become
 	// responsive". That error is fine - we only care that no service
 	// commands were invoked.
@@ -1240,7 +1240,7 @@ func TestServiceInstanceSuffixNormalizesCaseOnWindows(t *testing.T) {
 }
 
 // TestStopDoesNotTouchManagedDaemonOwnedByDifferentNMHome is the structural
-// regression test for the per-NM_HOME scoping. Before scoping, the launchd
+// regression test for the per-GREENLIGHT_HOME scoping. Before scoping, the launchd
 // label / systemd unit / Windows task name were globally unique per user.
 // Any `go test ./internal/daemon` in any checkout - including worktrees
 // without the testing.Testing() bypass - called TestStopNotRunningIsNoop
@@ -1249,7 +1249,7 @@ func TestServiceInstanceSuffixNormalizesCaseOnWindows(t *testing.T) {
 // with serviceManagerBypassed explicitly disabled (simulating worktrees
 // without the testing.Testing() guard), Stop(p) for a tmpdir paths.Paths
 // must still not invoke any destructive service-manager command against
-// artifacts owned by a different NM_HOME.
+// artifacts owned by a different GREENLIGHT_HOME.
 func TestStopDoesNotTouchManagedDaemonOwnedByDifferentNMHome(t *testing.T) {
 	cleanup := stubServiceRuntime(t)
 	defer cleanup()
@@ -1265,11 +1265,11 @@ func TestStopDoesNotTouchManagedDaemonOwnedByDifferentNMHome(t *testing.T) {
 	serviceCurrentUser = func() (*user.User, error) { return &user.User{Uid: "99999"}, nil }
 	runtimeGOOS = runtime.GOOS
 
-	// Simulate a live managed daemon owned by a DIFFERENT NM_HOME - i.e.
+	// Simulate a live managed daemon owned by a DIFFERENT GREENLIGHT_HOME - i.e.
 	// the user's real ~/.greenlight - by seeding the artifact that an
 	// older unscoped binary would have installed (the legacy global name),
 	// plus the scoped artifact a modern binary would install for that
-	// other NM_HOME. Stop(p) for a test p.Root() must touch neither.
+	// other GREENLIGHT_HOME. Stop(p) for a test p.Root() must touch neither.
 	otherP := paths.WithRoot(filepath.Join(home, "real-nm-home"))
 	switch runtime.GOOS {
 	case "darwin":
@@ -1313,13 +1313,13 @@ func TestStopDoesNotTouchManagedDaemonOwnedByDifferentNMHome(t *testing.T) {
 	}
 
 	if err := Stop(p); err != nil {
-		t.Fatalf("Stop(p) should be a no-op when no managed daemon is owned by this NM_HOME: %v", err)
+		t.Fatalf("Stop(p) should be a no-op when no managed daemon is owned by this GREENLIGHT_HOME: %v", err)
 	}
 	for _, cmd := range called {
-		// Destructive subcommands that would tear down another NM_HOME's daemon.
+		// Destructive subcommands that would tear down another GREENLIGHT_HOME's daemon.
 		for _, forbidden := range []string{"bootout", "/End", "/Delete", "--user stop", "--user disable"} {
 			if strings.Contains(cmd, forbidden) {
-				t.Fatalf("Stop(p) must not touch managed daemon owned by a different NM_HOME, got destructive command: %q", cmd)
+				t.Fatalf("Stop(p) must not touch managed daemon owned by a different GREENLIGHT_HOME, got destructive command: %q", cmd)
 			}
 		}
 	}
@@ -1333,8 +1333,8 @@ func TestWaitForDaemonStartKillsChildOnTimeout(t *testing.T) {
 
 	startedAt := time.Date(2026, 4, 21, 10, 0, 0, 0, time.UTC)
 
-	t.Setenv("NM_TEST_DAEMON_START_TIMEOUT", "20ms")
-	t.Setenv("NM_TEST_DAEMON_START_POLL_INTERVAL", "1ms")
+	t.Setenv("GREENLIGHT_TEST_DAEMON_START_TIMEOUT", "20ms")
+	t.Setenv("GREENLIGHT_TEST_DAEMON_START_POLL_INTERVAL", "1ms")
 
 	oldHealthCheck := daemonHealthCheck
 	daemonHealthCheck = func(*paths.Paths) (bool, error) { return false, nil }
@@ -1374,8 +1374,8 @@ func TestWaitForDaemonStartReturnsCleanupErrorOnTimeout(t *testing.T) {
 
 	startedAt := time.Date(2026, 4, 21, 10, 0, 0, 0, time.UTC)
 
-	t.Setenv("NM_TEST_DAEMON_START_TIMEOUT", "20ms")
-	t.Setenv("NM_TEST_DAEMON_START_POLL_INTERVAL", "1ms")
+	t.Setenv("GREENLIGHT_TEST_DAEMON_START_TIMEOUT", "20ms")
+	t.Setenv("GREENLIGHT_TEST_DAEMON_START_POLL_INTERVAL", "1ms")
 
 	oldHealthCheck := daemonHealthCheck
 	daemonHealthCheck = func(*paths.Paths) (bool, error) { return false, nil }
@@ -1416,8 +1416,8 @@ func TestWaitForDaemonStartSkipsKillForReusedPID(t *testing.T) {
 
 	startedAt := time.Date(2026, 4, 21, 10, 0, 0, 0, time.UTC)
 
-	t.Setenv("NM_TEST_DAEMON_START_TIMEOUT", "20ms")
-	t.Setenv("NM_TEST_DAEMON_START_POLL_INTERVAL", "1ms")
+	t.Setenv("GREENLIGHT_TEST_DAEMON_START_TIMEOUT", "20ms")
+	t.Setenv("GREENLIGHT_TEST_DAEMON_START_POLL_INTERVAL", "1ms")
 
 	oldHealthCheck := daemonHealthCheck
 	daemonHealthCheck = func(*paths.Paths) (bool, error) { return false, nil }
@@ -1455,8 +1455,8 @@ func TestWaitForDaemonStartDoesNotKillWhenPIDZero(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Setenv("NM_TEST_DAEMON_START_TIMEOUT", "20ms")
-	t.Setenv("NM_TEST_DAEMON_START_POLL_INTERVAL", "1ms")
+	t.Setenv("GREENLIGHT_TEST_DAEMON_START_TIMEOUT", "20ms")
+	t.Setenv("GREENLIGHT_TEST_DAEMON_START_POLL_INTERVAL", "1ms")
 
 	oldHealthCheck := daemonHealthCheck
 	daemonHealthCheck = func(*paths.Paths) (bool, error) { return false, nil }

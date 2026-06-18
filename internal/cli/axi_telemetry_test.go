@@ -29,7 +29,7 @@ func TestAxiCommandsEmitPageviews(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			tmpDir := t.TempDir()
-			t.Setenv("NM_HOME", t.TempDir())
+			t.Setenv("GREENLIGHT_HOME", t.TempDir())
 			chdir(t, tmpDir)
 
 			recorder := &telemetryRecorder{}
@@ -56,7 +56,7 @@ func TestAxiCommandsEmitPageviews(t *testing.T) {
 // TUI pageview carries entrypoint/run_status.
 func TestAxiRunPageviewCarriesFlags(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("NM_HOME", t.TempDir())
+	t.Setenv("GREENLIGHT_HOME", t.TempDir())
 	chdir(t, tmpDir)
 
 	recorder := &telemetryRecorder{}
@@ -84,7 +84,7 @@ func TestAxiRunPageviewCarriesFlags(t *testing.T) {
 // and whether a specific run was requested.
 func TestAxiLogsPageviewCarriesStep(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("NM_HOME", t.TempDir())
+	t.Setenv("GREENLIGHT_HOME", t.TempDir())
 	chdir(t, tmpDir)
 
 	recorder := &telemetryRecorder{}
@@ -107,7 +107,7 @@ func TestAxiLogsPageviewCarriesStep(t *testing.T) {
 
 func TestAxiLogsPageviewSanitizesInvalidStep(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("NM_HOME", t.TempDir())
+	t.Setenv("GREENLIGHT_HOME", t.TempDir())
 	chdir(t, tmpDir)
 
 	recorder := &telemetryRecorder{}
@@ -127,7 +127,7 @@ func TestAxiLogsPageviewSanitizesInvalidStep(t *testing.T) {
 
 func TestAxiRespondPageviewSanitizesInvalidAction(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("NM_HOME", t.TempDir())
+	t.Setenv("GREENLIGHT_HOME", t.TempDir())
 	chdir(t, tmpDir)
 
 	recorder := &telemetryRecorder{}

@@ -13,7 +13,7 @@ import (
 
 func TestStatsCommandRendersAllRepoDashboard(t *testing.T) {
 	nmHome := makeSocketSafeTempDir(t)
-	t.Setenv("NM_HOME", nmHome)
+	t.Setenv("GREENLIGHT_HOME", nmHome)
 	p := paths.WithRoot(nmHome)
 	if err := p.EnsureDirs(); err != nil {
 		t.Fatal(err)
