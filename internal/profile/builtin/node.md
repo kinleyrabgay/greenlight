@@ -10,15 +10,30 @@ ignore_patterns:
   - "node_modules/**"
   - "**/*.generated.ts"
 ---
-# Node.js (+ TypeScript) backend review rules
+# Node.js (TypeScript) backend guide
 
-Apply these when reviewing or documenting Node/TypeScript backend changes:
+## Stack
 
-- **Async correctness** — every Promise is awaited or explicitly handled; no floating promises. Flag missing `await` in `try/catch`.
-- **Errors** — throw `Error` (or subclasses), not strings; don't swallow errors with empty `catch`. Propagate or log with context.
-- **Input validation** — validate and narrow all external input (HTTP bodies, query params, env) at the boundary before use.
-- **Secrets** — never log secrets/tokens; read config from env, not hardcoded.
-- **Resource cleanup** — close DB connections, file handles, timers; avoid leaks in long-lived processes.
-- **TypeScript** — no `any` in new code; prefer `unknown` + narrowing at boundaries; keep return types explicit on exported functions.
-- **Concurrency** — guard shared mutable state; prefer immutable data flow.
-- **Logging** — structured, leveled logging; no stray `console.log` in production paths.
+- Node.js + TypeScript; HTTP via Express/Fastify/Nest or similar.
+- Vitest/Jest for tests; ESLint + Prettier; tsc/tsx or esbuild for build.
+
+## Architecture
+
+- Layered: routes/controllers → services (logic) → data access. Keep handlers thin.
+- Validate external input at the boundary; never trust HTTP bodies, params, or env.
+- Configuration from env; structured, leveled logging.
+
+## Do
+
+- Await or explicitly handle every Promise; no floating promises.
+- Throw `Error` (or subclasses) with context; wrap with cause where useful.
+- Validate and narrow all external input before use.
+- Close DB connections, file handles, and timers; avoid leaks in long-lived processes.
+- Keep exported function return types explicit; prefer `unknown` + narrowing over `any`.
+
+## Don't
+
+- Don't swallow errors with empty `catch` blocks.
+- Don't log secrets or tokens.
+- Don't hardcode config that belongs in env.
+- Don't share mutable global state without guarding it.

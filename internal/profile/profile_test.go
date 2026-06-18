@@ -7,7 +7,7 @@ import (
 )
 
 func TestLoadBuiltins(t *testing.T) {
-	for _, name := range []string{"angular", "react", "node", "go", "rails"} {
+	for _, name := range []string{"angular", "react", "node", "go", "rails", "flutter", "nextjs", "svelte", "python"} {
 		p, err := Load(name, "")
 		if err != nil {
 			t.Fatalf("Load(%q) error: %v", name, err)
@@ -58,7 +58,11 @@ func TestDetect(t *testing.T) {
 		"node": func(d string) {
 			os.WriteFile(filepath.Join(d, "package.json"), []byte(`{"dependencies":{"express":"4"}}`), 0o644)
 		},
-		"rails": func(d string) { os.WriteFile(filepath.Join(d, "Gemfile"), []byte("gem 'rails'"), 0o644) },
+		"rails":   func(d string) { os.WriteFile(filepath.Join(d, "Gemfile"), []byte("gem 'rails'"), 0o644) },
+		"flutter": func(d string) { os.WriteFile(filepath.Join(d, "pubspec.yaml"), []byte("name: x"), 0o644) },
+		"nextjs":  func(d string) { os.WriteFile(filepath.Join(d, "next.config.js"), []byte("module.exports={}"), 0o644) },
+		"svelte":  func(d string) { os.WriteFile(filepath.Join(d, "svelte.config.js"), []byte("export default {}"), 0o644) },
+		"python":  func(d string) { os.WriteFile(filepath.Join(d, "pyproject.toml"), []byte("[project]"), 0o644) },
 	}
 	for want, setup := range cases {
 		dir := t.TempDir()

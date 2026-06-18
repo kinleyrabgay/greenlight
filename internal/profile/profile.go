@@ -160,15 +160,31 @@ func Detect(repoDir string) string {
 	}
 
 	pkg := readPkg()
+	hasFile := func(globs ...string) bool {
+		for _, g := range globs {
+			if exists(g) {
+				return true
+			}
+		}
+		return false
+	}
 	switch {
 	case exists("angular.json") || exists("nx.json") || strings.Contains(pkg, "@angular/core"):
 		return "angular"
+	case exists("pubspec.yaml"):
+		return "flutter"
 	case exists("Gemfile") && (exists("config/application.rb") || gemfileHasRails(repoDir)):
 		return "rails"
-	case strings.Contains(pkg, "\"react\"") || strings.Contains(pkg, "\"next\""):
+	case hasFile("next.config.js", "next.config.mjs", "next.config.ts") || strings.Contains(pkg, "\"next\""):
+		return "nextjs"
+	case hasFile("svelte.config.js", "svelte.config.ts") || strings.Contains(pkg, "\"svelte\""):
+		return "svelte"
+	case strings.Contains(pkg, "\"react\""):
 		return "react"
 	case exists("go.mod"):
 		return "go"
+	case hasFile("pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", "Pipfile"):
+		return "python"
 	case pkg != "":
 		return "node"
 	}

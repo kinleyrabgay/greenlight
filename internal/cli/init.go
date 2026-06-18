@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/kinleyrabgay/greenlight/internal/config"
 	"github.com/kinleyrabgay/greenlight/internal/daemon"
 	"github.com/kinleyrabgay/greenlight/internal/gate"
 	"github.com/kinleyrabgay/greenlight/internal/profile"
@@ -49,10 +50,31 @@ func newInitCmd() *cobra.Command {
 					return fmt.Errorf("init: %w", err)
 				}
 
-				if framework != "" {
-					if werr := writeFrameworkConfig(repo.WorkingPath, strings.ToLower(framework)); werr != nil {
+				// Seed a GREENLIGHT.md audit guide in the project. The framework
+				// (explicit flag, else auto-detected) picks the seed content;
+				// with none, a generic template is written. The file is the
+				// repo's own, so an existing one is never overwritten.
+				guideStatus := ""
+				fw := config.ResolveFramework(framework, "", repo.WorkingPath)
+				if framework != "" && fw != "" {
+					if werr := writeFrameworkConfig(repo.WorkingPath, fw); werr != nil {
 						fmt.Fprintf(cmd.OutOrStdout(), "  %s  %s\n", sDim.Render("config"), sYellow.Render("framework not written: "+werr.Error()))
 					}
+				}
+				var prof *profile.Profile
+				if fw != "" {
+					prof, _ = profile.Load(fw, p.ProfilesDir())
+				}
+				if wrote, werr := writeGreenlightGuide(repo.WorkingPath, fw, prof); werr != nil {
+					guideStatus = sYellow.Render("GREENLIGHT.md not written: " + werr.Error())
+				} else if wrote {
+					seed := "generic template"
+					if fw != "" {
+						seed = fw + " template"
+					}
+					guideStatus = sGreen.Render("GREENLIGHT.md") + sDim.Render(" created ("+seed+") — edit it to control what greenlight audits")
+				} else {
+					guideStatus = sDim.Render("GREENLIGHT.md already present (left as-is)")
 				}
 				if err := daemon.EnsureDaemon(p); err != nil {
 					// Only roll back a gate we created in this run; a re-init
@@ -86,6 +108,9 @@ func newInitCmd() *cobra.Command {
 					fmt.Fprintf(w, "  %s  %s\n", sDim.Render(" skill"), sYellow.Render("skipped: "+skillErr.Error()))
 				} else {
 					fmt.Fprintf(w, "  %s  %s %s\n", sDim.Render(" skill"), sGreen.Render("/greenlight"), sDim.Render("installed for agents at user level"))
+				}
+				if guideStatus != "" {
+					fmt.Fprintf(w, "  %s  %s\n", sDim.Render(" guide"), guideStatus)
 				}
 				if legacy := skill.Vendored(repo.WorkingPath); len(legacy) > 0 {
 					fmt.Fprintf(w, "  %s  %s\n", sDim.Render("  note"), sDim.Render("vendored skill copy ("+strings.Join(legacy, ", ")+") is no longer needed and can be removed"))

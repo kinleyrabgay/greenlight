@@ -9,20 +9,33 @@ ignore_patterns:
   - ".nx/**"
   - "node_modules/**"
 ---
-# Angular (v17+/v21) review rules
+# Angular project guide
 
-Apply these when reviewing or documenting Angular changes:
+## Stack
 
-- **Standalone components** — no NgModules for new code.
-- **Signals** — `signal()`, `computed()`, `effect()` for state. Prefer `computed()` over manual subscriptions. Flag `effect()` that merely copies one signal into another.
-- **Signal forms** — use `form()` from `@angular/forms/signals`, not `FormBuilder`/`new FormGroup()`, for new forms and modals.
-- **Inputs/outputs** — `input()`/`output()`/`model()`, not `@Input()`/`@Output()` decorators.
-- **DI** — `inject()`, not constructor injection, in new code.
-- **Control flow** — `@if`/`@for`/`@switch`, not `*ngIf`/`*ngFor`/`*ngSwitch`.
-- **Cleanup** — `DestroyRef` + `takeUntilDestroyed()` for subscriptions.
-- **Zoneless** — no `zone.js` assumptions; change detection is zoneless.
-- **i18n** — every new translation key must exist in ALL configured languages. Missing keys render as raw strings in production. Flag keys added to only one language file.
-- **Server state** — TanStack Query (`injectQuery`/`injectMutation`) via facade services; do not call `HttpClient` directly in components.
-- **Shared state** — NgRx Signal Store (`signalStore`, `patchState`), not classic NgRx actions/reducers.
+- Angular v17+ (v20/v21 idioms), TypeScript, standalone components.
+- Signals for reactivity; Signal Forms (`@angular/forms/signals`) for new forms.
+- Often Nx monorepo, PrimeNG/Material, Transloco i18n, NgRx Signal Store, TanStack Query.
 
-Do not flag generated files (e.g. GraphQL codegen output) for style.
+## Architecture
+
+- Standalone components — no NgModules for new code.
+- Feature-first layout: components, services (api/bl/facade), state, models per feature.
+- Server state via TanStack Query behind facade services; shared client state in Signal Store; never call `HttpClient` directly from components.
+
+## Do
+
+- Use `signal()` / `computed()` / `effect()`; prefer `computed()` over manual subscriptions.
+- Use `input()` / `output()` / `model()`, not `@Input()` / `@Output()` decorators.
+- Use `inject()`, not constructor injection, in new code.
+- Use `@if` / `@for` / `@switch`, not `*ngIf` / `*ngFor` / `*ngSwitch`.
+- Clean up subscriptions with `DestroyRef` + `takeUntilDestroyed()`.
+- Add every new i18n key to ALL configured languages (missing keys render as raw strings).
+
+## Don't
+
+- Don't use `FormBuilder` / `new FormGroup()` for new forms — use Signal Forms.
+- Don't use an `effect()` just to copy one signal into another — derive with `computed()`.
+- Don't duplicate server data into a store — keep it in the query cache.
+- Don't assume `zone.js` — apps are zoneless.
+- Don't hand-edit generated files (e.g. GraphQL codegen output).

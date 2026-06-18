@@ -9,16 +9,30 @@ ignore_patterns:
   - "log/**"
   - "vendor/bundle/**"
 ---
-# Ruby on Rails review rules
+# Ruby on Rails project guide
 
-Apply these when reviewing or documenting Rails changes:
+## Stack
 
-- **Strong parameters** — controllers permit params explicitly; never `params.permit!` or mass-assign raw params.
-- **N+1 queries** — eager-load associations (`includes`) where iteration hits the DB; flag obvious N+1 patterns.
-- **Migrations** — reversible (`change` or paired `up`/`down`); avoid data + schema changes in one irreversible migration; add indexes for foreign keys and lookups.
-- **Security** — no SQL string interpolation (use parameterized queries / ActiveRecord); escape output; guard against mass-assignment; verify authorization on every action.
-- **Fat model / skinny controller** — business logic in models/services, not controllers or views.
-- **Callbacks** — avoid heavy or side-effecting `before_save`/`after_*` callbacks that hide control flow; prefer explicit service objects.
-- **Background work** — long or external work goes to a job (ActiveJob/Sidekiq), not the request cycle.
-- **Tests** — cover model validations, request specs for controllers; no reliance on `Time.now` without freezing.
-- **Style** — follow RuboCop; keep methods short; prefer Ruby idioms (`&.`, `presence`, guard clauses).
+- Ruby on Rails (MVC), Ruby; RSpec/Minitest for tests; RuboCop for lint/format.
+- ActiveRecord ORM; background jobs via ActiveJob/Sidekiq.
+
+## Architecture
+
+- Skinny controllers, fat models/service objects; views render, controllers orchestrate.
+- Business logic in models/POROs/services, not controllers or views.
+- Long or external work goes to a background job, not the request cycle.
+
+## Do
+
+- Permit params explicitly with strong parameters.
+- Eager-load associations (`includes`) to avoid N+1 queries.
+- Write reversible migrations; index foreign keys and lookup columns.
+- Use parameterized queries / ActiveRecord; verify authorization on every action.
+- Cover model validations and add request specs for controllers.
+
+## Don't
+
+- Don't `params.permit!` or mass-assign raw params.
+- Don't interpolate user input into SQL.
+- Don't hide side effects in heavy `before_save`/`after_*` callbacks.
+- Don't hand-edit `db/schema.rb`.

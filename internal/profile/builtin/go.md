@@ -8,15 +8,29 @@ ignore_patterns:
   - "**/*.pb.go"
   - "vendor/**"
 ---
-# Go review rules
+# Go project guide
 
-Apply these when reviewing or documenting Go changes:
+## Stack
 
-- **Error handling** — check every returned error; wrap with `fmt.Errorf("...: %w", err)` for context. Never discard errors with `_` unless clearly justified.
-- **Context** — accept `context.Context` as the first parameter for I/O and blocking calls; honor cancellation; never store a context in a struct.
-- **Goroutines** — every goroutine has a clear exit path; no leaks. Guard shared state with mutexes or channels; run with `-race`.
-- **defer** — release resources with `defer` (files, locks, rows); beware `defer` in loops.
-- **Interfaces** — accept interfaces, return concrete types; keep interfaces small.
-- **Nil & zero values** — guard nil maps/slices/pointers; prefer usable zero values.
-- **Naming & idioms** — exported identifiers documented; errors are `ErrXxx` or wrapped; no stutter (`pkg.PkgThing`).
-- **Tests** — table-driven where it fits; `t.Parallel()` when safe; no time-based flakiness.
+- Go (modules), standard toolchain; `golangci-lint` for lint, `go test -race` for tests.
+
+## Architecture
+
+- Small packages with clear ownership; `cmd/` for entrypoints, `internal/` for private code.
+- Accept interfaces, return concrete types; keep interfaces small.
+- Thread `context.Context` through I/O, subprocess, and networked work.
+
+## Do
+
+- Check every returned error; wrap with `fmt.Errorf("...: %w", err)` for context.
+- Take `context.Context` as the first parameter for blocking calls; honor cancellation.
+- Give every goroutine a clear exit path; guard shared state; run tests with `-race`.
+- Release resources with `defer` (files, locks, rows).
+- Document exported identifiers; prefer usable zero values.
+
+## Don't
+
+- Don't discard errors with `_` unless clearly justified.
+- Don't store a `context.Context` in a struct.
+- Don't leak goroutines or use time-based sleeps in tests.
+- Don't hand-edit generated files (`*.pb.go`, `*.generated.go`).

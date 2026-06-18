@@ -6,20 +6,34 @@ commands:
 ignore_patterns:
   - "dist/**"
   - "build/**"
-  - ".next/**"
   - "node_modules/**"
   - "**/*.generated.ts"
 ---
-# React (+ TypeScript) review rules
+# React project guide
 
-Apply these when reviewing or documenting React changes:
+## Stack
 
-- **Rules of Hooks** — hooks only at the top level of components/custom hooks, never in conditionals or loops. Flag any violation.
-- **Dependency arrays** — `useEffect`/`useMemo`/`useCallback` deps must be complete and correct. Flag missing deps and effects that should be derived state instead.
-- **Derived state** — compute during render, don't mirror props into state with an effect.
-- **Keys** — stable, unique `key` on list items; never the array index when the list reorders.
-- **Effects** — an effect that only transforms data is usually wrong; prefer computing inline or `useMemo`.
-- **Server Components / Next.js** — keep `"use client"` boundaries minimal; don't put server-only code (secrets, fs) in client components. Data fetching belongs in Server Components or route handlers.
-- **Accessibility** — interactive elements are real buttons/links with labels; images have `alt`.
-- **TypeScript** — no `any` in new code; prefer discriminated unions over boolean flags for state.
-- **Performance** — memoize expensive children only when profiling justifies it; avoid premature `memo`/`useCallback` noise.
+- React 18+, TypeScript, function components + hooks.
+- Vite or CRA build; Vitest/Jest + Testing Library; ESLint + Prettier.
+- State: local hooks, Context, or a store (Redux Toolkit/Zustand) for shared state.
+
+## Architecture
+
+- Components are pure functions of props + state; side effects isolated in hooks.
+- Co-locate component, styles, and tests; lift shared logic into custom hooks.
+- Data fetching via a cache layer (TanStack Query/SWR), not ad-hoc effects.
+
+## Do
+
+- Follow the Rules of Hooks: hooks only at the top level, never in conditionals/loops.
+- Keep `useEffect`/`useMemo`/`useCallback` dependency arrays complete and correct.
+- Derive state during render; compute with `useMemo` instead of mirroring props into state.
+- Give list items stable, unique `key`s (not the array index when the list reorders).
+- Make interactive elements real buttons/links with labels; images get `alt`.
+
+## Don't
+
+- Don't use an effect that only transforms data — compute it inline.
+- Don't introduce `any` in new code; prefer discriminated unions over boolean-flag state.
+- Don't put server-only code (secrets, fs) in client components.
+- Don't sprinkle `memo`/`useCallback` without a profiling reason.
