@@ -28,13 +28,17 @@ Each step passes or stops with a **finding**. Safe, mechanical fixes are applied
 
 ## Install
 
+Homebrew (builds from source, needs the `go` toolchain):
+
 ```sh
-curl -fsSL https://raw.githubusercontent.com/kinleyrabgay/greenlight/main/docs/install.sh | sh
+brew install kinleyrabgay/greenlight/greenlight
 ```
 
-Or from source:
+Or with the install script, or from source:
 
 ```sh
+curl -fsSL https://raw.githubusercontent.com/kinleyrabgay/greenlight/main/docs/install.sh | sh
+# or:
 go build -o ~/bin/greenlight ./cmd/greenlight
 ```
 
@@ -55,8 +59,9 @@ greenlight doctor
 ### 1. Install greenlight
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/kinleyrabgay/greenlight/main/docs/install.sh | sh
-# or from source:  go build -o ~/bin/greenlight ./cmd/greenlight
+brew install kinleyrabgay/greenlight/greenlight
+# or:  curl -fsSL https://raw.githubusercontent.com/kinleyrabgay/greenlight/main/docs/install.sh | sh
+# or:  go build -o ~/bin/greenlight ./cmd/greenlight
 ```
 
 ### 2. Initialize the gate (once per repo)
