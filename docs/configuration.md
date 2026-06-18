@@ -52,19 +52,29 @@ test:
 | `intent.enabled` | Toggle transcript-based intent inference (used when no `--intent` is supplied). |
 | `test.evidence.store_in_repo` | Persist test evidence in the repo instead of only the run dir. |
 
+## GREENLIGHT.md (per-repo audit guide)
+
+`greenlight init` seeds a **`GREENLIGHT.md`** at the repo root: stack summary, architecture, and do/don't rules. greenlight reads it during the review and document steps, so **each repo controls what gets audited**.
+
+- Seeded from the resolved framework profile, or a generic template when none matches.
+- **Never overwritten** on re-init — the repo owns it.
+- When a repo has no `GREENLIGHT.md`, greenlight falls back to the built-in profile for its detected framework.
+
+Edit it freely; commit it so the gate (which validates committed history) picks it up. Examples live in [`example/`](../example/).
+
 ## Framework profiles
 
-A **profile** is a bundle of defaults for a stack: lint/test/format commands, ignore patterns, and review rules that get injected into the review and document steps. It lets a repo say `framework: angular` instead of hand-writing everything.
+A **profile** is a bundle of defaults for a stack: lint/test/format commands, ignore patterns, and a review guide. It picks the `GREENLIGHT.md` seed and supplies commands when `.greenlight.yaml` doesn't.
 
 **Resolution precedence:**
 
 1. `greenlight init --framework <name>` — scaffolds the field into a new `.greenlight.yaml`.
 2. The `framework:` field in `.greenlight.yaml`.
-3. Auto-detection from repo files (`angular.json`/`nx.json`, `package.json` deps, `go.mod`, `Gemfile`, …).
+3. Auto-detection from repo files.
 
 Repo `commands` / `ignore_patterns` always win over a profile — the profile only fills what you left empty.
 
-**Built-in profiles:** `angular`, `react`, `node`, `go`, `rails`. List everything available (and what's detected here) with:
+**Built-in profiles:** `angular`, `react`, `nextjs`, `node`, `go`, `rails`, `flutter`, `svelte`, `python`. List everything available (and what's detected here) with:
 
 ```sh
 greenlight profiles
@@ -83,9 +93,11 @@ commands:
 ignore_patterns:
   - "**/*.pb.go"
 ---
-# House rules (this body is injected into the review/document agent)
-- Rule one
-- Rule two
+# Guide body — seeds GREENLIGHT.md and feeds the review/document agent
+## Stack
+## Architecture
+## Do
+## Don't
 ```
 
-Save it at `~/.greenlight/profiles/<name>.md`. A user file overrides the built-in of the same name, so you can tune `angular` or add `svelte` without rebuilding.
+Save it at `~/.greenlight/profiles/<name>.md`. A user file overrides the built-in of the same name, so you can tune `angular` or add a new stack without rebuilding.

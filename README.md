@@ -1,13 +1,93 @@
-# `git push greenlight`
+<div align="center">
 
-A local git proxy that validates code before it reaches your real remote.
+# greenlight
 
-Push to `greenlight` instead of `origin`. It spins up a disposable worktree, runs an AI-driven pipeline (review → test → docs → lint), pushes upstream only after every check passes, and opens a clean PR for you.
+**A local git proxy that validates your code before it reaches the remote.**
 
-- **Non-blocking** — runs in an isolated worktree; your working tree stays put.
+Push to `greenlight` instead of `origin`. It runs an AI-driven pipeline — review, tests, docs, lint — in a disposable worktree, then pushes upstream and opens a clean PR only after every check is green.
+
+[![CI](https://github.com/kinleyrabgay/greenlight/actions/workflows/ci.yml/badge.svg)](https://github.com/kinleyrabgay/greenlight/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
+
+</div>
+
+---
+
+## Contents
+
+- [Why](#why)
+- [Install](#install)
+- [Quick start](#quick-start)
+- [How it works](#how-it-works)
+- [GREENLIGHT.md — per-repo audit guide](#greenlightmd--per-repo-audit-guide)
+- [Framework profiles](#framework-profiles)
+- [Configuration](#configuration)
+- [Commands](#commands)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Why
+
+- **Non-blocking** — the pipeline runs in an isolated worktree; your working tree stays put.
 - **Agent-agnostic** — `claude`, `codex`, `rovodev`, `opencode`, `pi`, or `acp:<target>`.
-- **Framework-aware** — profiles supply per-stack commands + review rules (`angular`, `react`, `node`, `go`, `rails`, or your own).
+- **Framework-aware** — ships review guides for Angular, React, Next.js, Node, Go, Rails, Flutter, Svelte, Python.
+- **You own the rules** — each repo gets a `GREENLIGHT.md` it fully controls.
 - **Human in charge** — auto-fix the mechanical stuff, escalate judgment calls to you.
+
+## Install
+
+Homebrew (builds from source, needs the `go` toolchain):
+
+```sh
+brew install kinleyrabgay/greenlight/greenlight
+```
+
+<details>
+<summary>Other methods</summary>
+
+```sh
+# install script
+curl -fsSL https://raw.githubusercontent.com/kinleyrabgay/greenlight/main/docs/install.sh | sh
+
+# from source
+go build -o ~/bin/greenlight ./cmd/greenlight
+```
+</details>
+
+Check your environment any time with `greenlight doctor`.
+
+## Quick start
+
+```sh
+# 0. prerequisites: git repo with an `origin` remote, `gh` authenticated,
+#    and a coding agent on PATH (claude / codex / opencode / acli / pi).
+
+# 1. set up the gate (once per repo). seeds a GREENLIGHT.md for your stack.
+greenlight init                      # auto-detects the framework
+greenlight init --framework angular  # ...or pick one explicitly
+
+# 2. work on a feature branch (the gate validates committed, non-default branches)
+git checkout -b my-feature
+git add -A && git commit -m "my change"
+
+# 3. push to the gate instead of origin
+git push greenlight
+
+# 4. act on findings
+greenlight   # opens the TUI: approve / fix / skip each finding
+```
+
+Once every step is green, greenlight pushes to `origin` and opens the PR for you — no manual `git push origin`, no hand-written PR body.
+
+**Prefer your agent to drive it?** `init` installs a `/greenlight` skill:
+
+```
+/greenlight                       # gate the work you already committed
+/greenlight add a --json flag …   # do the task, then gate it
+```
 
 ## How it works
 
@@ -24,127 +104,87 @@ Push to `greenlight` instead of `origin`. It spins up a disposable worktree, run
         clean PR, opened for you
 ```
 
-Each step passes or stops with a **finding**. Safe, mechanical fixes are applied automatically; anything touching intent is escalated for you to **approve**, **fix**, or **skip**. Nothing reaches your real remote until every check is green.
+Each step passes or stops with a **finding** (severity + an action: `auto-fix`, `ask-user`, `no-op`). Safe, mechanical fixes are applied automatically; anything touching intent is escalated for you to **approve**, **fix**, or **skip**. Nothing reaches your real remote until every check is green. The pipeline order is fixed and opinionated so "passed the gate" means the same thing across repos — see [docs/pipeline.md](docs/pipeline.md).
 
-## Install
+## GREENLIGHT.md — per-repo audit guide
 
-Homebrew (builds from source, needs the `go` toolchain):
+`greenlight init` drops a **`GREENLIGHT.md`** at your repo root describing the stack, architecture, and do/don't rules for your project. greenlight reads it during review, so **each repo controls exactly what gets audited** — edit it freely.
 
-```sh
-brew install kinleyrabgay/greenlight/greenlight
-```
+- Seeded from the resolved [framework profile](#framework-profiles), or a generic template if none matches.
+- Never overwritten on re-init — it's yours.
+- If a repo has no `GREENLIGHT.md`, greenlight falls back to the built-in profile for its detected framework.
 
-Or with the install script, or from source:
-
-```sh
-curl -fsSL https://raw.githubusercontent.com/kinleyrabgay/greenlight/main/docs/install.sh | sh
-# or:
-go build -o ~/bin/greenlight ./cmd/greenlight
-```
-
-## Step-by-step
-
-### 0. Prerequisites
-
-- **git** and a repo with an `origin` remote.
-- **[gh](https://cli.github.com/)**, authenticated (`gh auth login`) — needed for the PR and CI steps.
-- A **coding agent** on `PATH`: `claude`, `codex`, `opencode`, `acli` (Rovo Dev), or `pi`.
-
-Check everything at once:
-
-```sh
-greenlight doctor
-```
-
-### 1. Install greenlight
-
-```sh
-brew install kinleyrabgay/greenlight/greenlight
-# or:  curl -fsSL https://raw.githubusercontent.com/kinleyrabgay/greenlight/main/docs/install.sh | sh
-# or:  go build -o ~/bin/greenlight ./cmd/greenlight
-```
-
-### 2. Initialize the gate (once per repo)
-
-From inside the repo:
-
-```sh
-greenlight init                      # sets up the gate + daemon + /greenlight skill
-greenlight init --framework angular  # ...and scaffold a framework profile (optional)
-```
-
-This creates a `greenlight` git remote, starts the background daemon, and installs the `/greenlight` agent skill. Re-running is safe.
-
-### 3. Work on a feature branch
-
-The gate validates committed history on a **non-default** branch:
-
-```sh
-git checkout -b my-feature
-# ...make changes...
-git add -A && git commit -m "my change"
-```
-
-### 4. Run the pipeline
-
-Push to `greenlight` instead of `origin`:
-
-```sh
-git push greenlight
-```
-
-### 5. Act on findings
-
-```sh
-greenlight        # open the TUI for the active run
-```
-
-Each step that needs a decision shows **findings**. For each: **approve** (accept as-is), **fix** (let the pipeline fix it), or **skip**. Auto-fixable findings can be applied for you. Once every step is green, greenlight pushes to `origin` and opens the PR — no manual `git push origin`, no hand-written PR body.
-
-### Optional: let your agent drive it
-
-```
-/greenlight                         # gate the work you already committed
-/greenlight add a --json flag ...   # do the task, then gate it
-```
-
-`init` installs `/greenlight` for Claude Code, Codex, OpenCode, Rovo Dev, and Pi. Under the hood it drives `greenlight axi`, a non-interactive interface to the same flow.
-
-## Three ways to trigger the gate
-
-- **`git push greenlight`** — the explicit Git path; push a committed branch to the gate remote.
-- **`greenlight`** — the TUI; run after making changes and a wizard branches, commits, and pushes for you (`greenlight -y` does it automatically).
-- **`/greenlight`** — the agent skill; `/greenlight <task>` does a task and gates it, bare `/greenlight` gates existing committed work.
+See ready-made examples in [`example/`](example/) — [Angular](example/angular/GREENLIGHT.md), [React](example/react/GREENLIGHT.md).
 
 ## Framework profiles
 
-A profile bundles default `lint`/`test`/`format` commands, ignore patterns, and review rules for a stack. Select one per repo:
+A profile bundles default `lint`/`test`/`format` commands, ignore patterns, and a review guide. It picks the `GREENLIGHT.md` seed and supplies commands when your `.greenlight.yaml` doesn't.
+
+| Profile | Detected by |
+|---|---|
+| `angular` | `angular.json`, `nx.json`, or `@angular/core` |
+| `nextjs` | `next.config.*` or `next` dependency |
+| `react` | `react` dependency |
+| `svelte` | `svelte.config.*` or `svelte` dependency |
+| `flutter` | `pubspec.yaml` |
+| `rails` | `Gemfile` with Rails |
+| `go` | `go.mod` |
+| `python` | `pyproject.toml` / `requirements.txt` / … |
+| `node` | any other `package.json` |
+
+Selection precedence: `greenlight init --framework <name>` > the `framework:` field in `.greenlight.yaml` > auto-detection. List them and see what's detected here with `greenlight profiles`. Add your own at `~/.greenlight/profiles/<name>.md`.
+
+## Configuration
+
+Per-repo `.greenlight.yaml` (all fields optional):
 
 ```yaml
-# .greenlight.yaml
-framework: angular
+framework: angular            # profile to use; omit to auto-detect
+agent: claude                 # claude | codex | rovodev | opencode | pi | acp:<target>
+commands:                     # override the profile's commands
+  lint: "yarn lint"
+  test: "yarn nx run-many -t test"
+  format: "yarn nx format:write"
+ignore_patterns:
+  - "**/*.generated.ts"
+auto_fix:                     # max auto-fix attempts per step (0 = always ask)
+  review: 3
+  test: 3
+  lint: 5
 ```
 
-Precedence: `greenlight init --framework <name>` > the `framework:` field > auto-detection from repo files. Repo values always override profile defaults. List them with `greenlight profiles`; add your own at `~/.greenlight/profiles/<name>.md`.
+Full reference: [docs/configuration.md](docs/configuration.md).
 
-## Docs
+## Commands
 
-- [Configuration](docs/configuration.md) — `.greenlight.yaml`, framework profiles, auto-fix, evidence.
+| Command | What it does |
+|---|---|
+| `greenlight init [--framework X]` | Set up the gate, daemon, `/greenlight` skill, and seed `GREENLIGHT.md`. |
+| `greenlight` | Attach to the active run (TUI). |
+| `greenlight profiles` | List framework profiles and the one detected here. |
+| `greenlight doctor` | Check git, gh, agents, daemon, and data dir. |
+| `greenlight status` / `runs` / `stats` | Inspect repo, runs, and history. |
+| `greenlight rerun` / `eject` / `update` | Re-run the pipeline / remove the gate / self-update. |
+
+Full reference: [docs/cli.md](docs/cli.md).
+
+## Troubleshooting
+
+- **`greenlight doctor` shows a missing agent** — install one of `claude`, `codex`, `opencode`, `acli`, `pi` and authenticate it.
+- **PR / CI steps fail** — install and authenticate the [GitHub CLI](https://cli.github.com/): `gh auth login`.
+- **"must be on a non-default branch"** — the gate validates committed history on a feature branch; `git checkout -b`.
+- **Heavy/slow runs** — trim the `test` command in `.greenlight.yaml` (some profiles run a full build).
+- **Skip a step for one push** — `git push -o greenlight.skip=test,lint greenlight <branch>` or `greenlight --skip test,lint`.
+
+## Documentation
+
+- [Configuration](docs/configuration.md) — `.greenlight.yaml`, framework profiles, `GREENLIGHT.md`.
 - [Pipeline](docs/pipeline.md) — the nine steps and what each does.
 - [CLI](docs/cli.md) — every command and flag.
 
-## Development
+## Contributing
 
-```sh
-make build   # build bin/greenlight with version info
-make test    # go test -race ./... (excludes e2e)
-make e2e     # tagged end-to-end agent suite
-make lint    # skill-drift check + go vet ./...
-make skill   # regenerate the committed /greenlight skill files
-make fmt     # gofmt -w .
-```
-
-`make e2e-record` overwrites `internal/e2e/fixtures/` from the real `claude`, `codex`, and `opencode` CLIs and spends real API quota — review before committing.
+This repo *is* greenlight — contributions go through the tool. See [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md).
 
 ## License
 
